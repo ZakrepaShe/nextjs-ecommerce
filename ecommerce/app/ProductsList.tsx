@@ -1,8 +1,41 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { Product } from "./product-data";
+import type { Product } from "./product-data";
+import { useState } from 'react';
+import { getApiUrl } from './lib/api-url';
 
-export default function ProductsList({ products }: { products: Product[] }) {
+export default function ProductsList({ products, initialCartProducts = [] }: { products: Product[], initialCartProducts?: Product[] }) {
+  const [cartProducts, setCartProducts] = useState(initialCartProducts);
+  const handleAddToCart = async (productId: string) => {
+    const response = await fetch(`${getApiUrl()}/api/users/1/cart`, {
+      method: 'POST',
+      body: JSON.stringify({ productId }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const updatedCartProducts = await response.json();
+    setCartProducts(updatedCartProducts);
+  };
+
+  const handleRemoveFromCart = async (productId: string) => {
+    const response = await fetch(`${getApiUrl()}/api/users/1/cart`, {
+      method: 'DELETE',
+      body: JSON.stringify({ productId }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const updatedCartProducts = await response.json();
+    setCartProducts(updatedCartProducts);
+  };
+  function productIsInCart(productId: string) {
+    return cartProducts.some(product => product.id === productId);
+  }
+
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       {products.map(product => (
@@ -21,6 +54,19 @@ export default function ProductsList({ products }: { products: Product[] }) {
           </div>
           <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
           <p className="text-gray-600">${product.price}</p>
+          {productIsInCart(product.id) ? (
+            <button onClick={
+              (e) => {
+                e.preventDefault();
+                handleRemoveFromCart(product.id)
+              }} className="bg-red-500 text-white px-4 py-2 rounded-md">Remove from Cart</button>
+          ) : (
+            <button onClick={
+              (e) => {
+                e.preventDefault();
+                handleAddToCart(product.id)
+              }} className="bg-blue-500 text-white px-4 py-2 rounded-md">Add to Cart</button>
+          )}
         </Link>
       ))}
     </div>
