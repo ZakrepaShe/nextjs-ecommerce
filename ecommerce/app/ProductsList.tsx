@@ -4,31 +4,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from "./product-data";
 import { useState } from 'react';
-import { getApiUrl } from './lib/api-url';
+import { addToCart, removeFromCart } from './actions/cart-actions';
 
 export default function ProductsList({ products, initialCartProducts = [] }: { products: Product[], initialCartProducts?: Product[] }) {
   const [cartProducts, setCartProducts] = useState(initialCartProducts);
+  
   const handleAddToCart = async (productId: string) => {
-    const response = await fetch(`${getApiUrl()}/api/users/1/cart`, {
-      method: 'POST',
-      body: JSON.stringify({ productId }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const updatedCartProducts = await response.json();
+    const updatedCartProducts = await addToCart('1', productId);
     setCartProducts(updatedCartProducts);
   };
 
   const handleRemoveFromCart = async (productId: string) => {
-    const response = await fetch(`${getApiUrl()}/api/users/1/cart`, {
-      method: 'DELETE',
-      body: JSON.stringify({ productId }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const updatedCartProducts = await response.json();
+    const updatedCartProducts = await removeFromCart('1', productId);
     setCartProducts(updatedCartProducts);
   };
   function productIsInCart(productId: string) {

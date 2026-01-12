@@ -1,11 +1,10 @@
 import NotFoundPage from "@/app/not-found";
-import { getApiUrl } from "@/app/lib/api-url";
+import { getProductById } from "@/app/actions/product-actions";
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
-  const response = await fetch(`${getApiUrl()}/api/products/${params.id}`);
-  const product = await response.json();
+  const product = await getProductById(params.id);
 
   if (!product) {
     return <NotFoundPage />

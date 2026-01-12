@@ -3,20 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { products, type Product } from '../product-data';
-import { getApiUrl } from '../lib/api-url';
+import { removeFromCart } from '../actions/cart-actions';
 
 export default function CartPage({ initialCartProducts }: { initialCartProducts: Product[] }) {
   const [cartProducts, setCartProducts] = useState(initialCartProducts);
 
   const handleRemoveFromCart = async (productId: string) => {
-    const response = await fetch(`${getApiUrl()}/api/users/1/cart`, {
-      method: 'DELETE',
-      body: JSON.stringify({ productId }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const updatedCartProducts = await response.json();
+    const updatedCartProducts = await removeFromCart('1', productId);
     setCartProducts(updatedCartProducts);
   };
 
