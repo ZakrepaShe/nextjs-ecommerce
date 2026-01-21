@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "./NavBar";
+import ToastProvider from "./components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body>
         <NavBar />
         {children}
+        <ToastProvider />
       </body>
     </html>
   );

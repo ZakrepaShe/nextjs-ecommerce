@@ -2,11 +2,11 @@ import ProductsList from "../ProductsList";
 import { getCartProducts } from "../actions/cart-actions";
 import { getAllProducts } from "../actions/product-actions";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
   const products = await getAllProducts();
-  const cartProducts = await getCartProducts('1');
+  const cartProducts = await getCartProducts("1");
 
   return (
     <div className="container mx-auto p-8">

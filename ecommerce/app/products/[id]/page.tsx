@@ -1,22 +1,27 @@
 import NotFoundPage from "@/app/not-found";
 import { getProductById } from "@/app/actions/product-actions";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const product = await getProductById(params.id);
 
   if (!product) {
-    return <NotFoundPage />
+    return <NotFoundPage />;
   }
 
   return (
     <div className="container mx-auto p-8 flex flex-col md:flex-row">
       <div className="md:w-1/2 mb-4 md:mb-0 md:mr-8">
         <img
-          src={'/' + product.imageUrl}
+          src={"/" + product.imageUrl}
           alt="Product image"
-          className="w-full h-auto rounded-lg shadow-md" />
+          className="w-full h-auto rounded-lg shadow-md"
+        />
       </div>
       <div className="md:w-1/2">
         <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
