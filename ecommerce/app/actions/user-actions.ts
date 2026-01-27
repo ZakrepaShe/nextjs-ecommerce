@@ -1,13 +1,23 @@
+"use server";
+
 import { connectToDatabase } from "@/app/api/db";
 import { Db } from "mongodb";
-import { ObjectId } from "mongodb";
+import type { User, FrontendUser } from "../types";
+
+const convertToFrontendUser = (user: User): FrontendUser => {
+  return {
+    userId: user.userId,
+    name: user.name,
+    isAdmin: user.isAdmin,
+  };
+};
 
 async function getNextUserId(db: Db): Promise<string> {
   const counterCollection = db.collection("counters");
 
   // Try to increment the userId counter
   const result = await counterCollection.findOneAndUpdate(
-    { _id: new ObjectId("userId") },
+    { type: "userId" },
     { $inc: { sequence_value: 1 } },
     { upsert: true, returnDocument: "after" }
   );
@@ -26,7 +36,7 @@ async function getNextUserId(db: Db): Promise<string> {
       const maxUserId = parseInt(existingUsers[0].userId) || 0;
       const nextUserId = maxUserId + 1;
       await counterCollection.updateOne(
-        { _id: new ObjectId("userId") },
+        { type: "userId" },
         { $set: { sequence_value: nextUserId } },
         { upsert: true }
       );
@@ -35,7 +45,7 @@ async function getNextUserId(db: Db): Promise<string> {
 
     // Start from 1 if no users exist
     await counterCollection.updateOne(
-      { _id: new ObjectId("userId") },
+      { type: "userId" },
       { $set: { sequence_value: 1 } },
       { upsert: true }
     );
@@ -47,7 +57,7 @@ async function getNextUserId(db: Db): Promise<string> {
 
 export async function login(name: string, password: string) {
   const { db } = await connectToDatabase();
-  const user = await db.collection("users").findOne({ name });
+  const user = await db.collection<User>("users").findOne({ name });
   if (!user) {
     return {
       success: false,
@@ -65,24 +75,24 @@ export async function login(name: string, password: string) {
   return {
     success: true,
     message: "Login successful",
-    user: JSON.parse(JSON.stringify(user)),
+    user: convertToFrontendUser(user),
   };
 }
 
 export async function register(name: string, password: string) {
   const { db } = await connectToDatabase();
-  const user = await db.collection("users").findOne({ name });
+  const user = await db.collection<User>("users").findOne({ name });
   if (user) {
     if (user.password === password) {
       return {
         success: true,
         message: "User already exists and is logged in",
-        user: JSON.parse(JSON.stringify(user)),
+        user: convertToFrontendUser(user),
       };
     }
     return {
       success: false,
-      message: "User already exists but password is incorrect",
+      message: "User already exists",
       user: null,
     };
   }
@@ -92,12 +102,20 @@ export async function register(name: string, password: string) {
     .insertOne({ userId, name, password });
 
   const insertedUser = await db
-    .collection("users")
+    .collection<User>("users")
     .findOne({ _id: newUser.insertedId });
+
+  if (!insertedUser) {
+    return {
+      success: false,
+      message: "Failed to register user",
+      user: null,
+    };
+  }
 
   return {
     success: true,
-    message: "User registered successfully",
-    user: JSON.parse(JSON.stringify(insertedUser)),
+    message: "User registered and logged in successfully",
+    user: convertToFrontendUser(insertedUser),
   };
 }

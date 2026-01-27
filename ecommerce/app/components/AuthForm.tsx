@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useUser } from "./UserProvider";
+import type { FrontendUser } from "../types";
 
 export type AuthFormType = "login" | "register";
 
 type AuthFormProps = {
   type: AuthFormType;
-  onSubmit: (
-    type: AuthFormType,
-    name: string,
-    password: string
-  ) => Promise<{ success: boolean; message?: string } | void>;
+  action: (name: string, password: string) => Promise<{
+    success: boolean;
+    message?: string;
+    user?: FrontendUser;
+  }>;
 };
 
-export default function AuthForm({ type, onSubmit }: AuthFormProps) {
+export default function AuthForm({ type, action }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { setUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,11 +30,16 @@ export default function AuthForm({ type, onSubmit }: AuthFormProps) {
     const password = formData.get("password") as string;
 
     try {
-      const result = await onSubmit(type, name, password);
+      const result = await action(name, password);
       if (result && !result.success) {
         toast.error(result.message || "An error occurred");
       } else if (result && result.success) {
+        // Store user in context (password will be excluded automatically)
+        if (result.user) {
+          setUser(result.user);
+        }
         toast.success(result.message || "Success!");
+        router.push("/arc-raiders/blueprints");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -47,6 +57,7 @@ export default function AuthForm({ type, onSubmit }: AuthFormProps) {
         <input
           type="text"
           id="name"
+          name="name"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         />
       </div>
@@ -60,6 +71,7 @@ export default function AuthForm({ type, onSubmit }: AuthFormProps) {
         <input
           type="password"
           id="password"
+          name="password"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         />
       </div>
