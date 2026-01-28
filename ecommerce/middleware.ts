@@ -15,14 +15,9 @@ const authRoutes = ["/login", "/register"];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for Server Actions (Next.js uses POST with Next-Action header)
-  const isServerAction =
-    request.headers.get("next-action") !== null ||
-    request.headers.get("x-action") !== null ||
-    (request.method === "POST" &&
-      request.headers.get("content-type")?.includes("multipart/form-data"));
-
-  if (isServerAction) {
+  // Skip middleware entirely for non-GET requests (Server Actions, API calls, etc.)
+  // Middleware should only handle page navigation redirects
+  if (request.method !== "GET") {
     return NextResponse.next();
   }
 
