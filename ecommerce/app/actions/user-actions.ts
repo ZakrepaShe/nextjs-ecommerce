@@ -143,5 +143,8 @@ export async function logout() {
 }
 
 export async function getCurrentUser() {
-  return await getAuthenticatedUser();
+  console.log("[user-actions] getCurrentUser called");
+  const user = await getAuthenticatedUser();
+  console.log("[user-actions] getCurrentUser returning:", user);
+  return user;
 }

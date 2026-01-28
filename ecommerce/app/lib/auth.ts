@@ -35,6 +35,7 @@ export async function clearAuthCookie() {
 export async function getAuthUserId(): Promise<string | null> {
   const cookieStore = await cookies();
   const userId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  console.log("[Auth] getAuthUserId:", { userId, hasCookie: !!userId });
   return userId || null;
 }
 
@@ -42,29 +43,41 @@ export async function getAuthUserId(): Promise<string | null> {
  * Gets the full authenticated user from the database
  */
 export async function getAuthenticatedUser(): Promise<FrontendUser | null> {
+  console.log("[Auth] getAuthenticatedUser called");
   const userId = await getAuthUserId();
 
   if (!userId) {
+    console.log("[Auth] No userId found in cookie");
     return null;
   }
 
+  console.log("[Auth] Found userId in cookie:", userId);
+
   try {
+    console.log("[Auth] Connecting to database...");
     const { db } = await connectToDatabase();
+    console.log("[Auth] Querying for user with userId:", userId);
     const user = await db.collection<User>("users").findOne({ userId });
 
     if (!user) {
+      console.log("[Auth] User not found in database, clearing cookie");
       // User ID in cookie but user doesn't exist - clear the cookie
       await clearAuthCookie();
       return null;
     }
 
+    console.log("[Auth] User found:", {
+      userId: user.userId,
+      name: user.name,
+      isAdmin: user.isAdmin,
+    });
     return {
       userId: user.userId,
       name: user.name,
       isAdmin: user.isAdmin,
     };
   } catch (error) {
-    console.error("Error fetching authenticated user:", error);
+    console.error("[Auth] Error fetching authenticated user:", error);
     return null;
   }
 }
