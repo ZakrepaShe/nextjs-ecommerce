@@ -1,6 +1,6 @@
 "use client";
 
-import { syncBlueprints, updateBlueprintsOrder } from "../actions/arc-blueprints-actions";
+import { addExtraBlueprint, syncBlueprints, updateBlueprintsOrder } from "../actions/arc-blueprints-actions";
 import { useUser } from "../components/UserProvider";
 import type { Blueprint } from "../types";
 import { BlueprintComponent } from "../components/Blueprint";
@@ -21,6 +21,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableItem } from "./SortableItem";
+import { toast } from "react-hot-toast";
 
 type AdminBlueprintsProps = {
   blueprintsOrder: string[];
@@ -29,6 +30,12 @@ type AdminBlueprintsProps = {
 
 export default function AdminBlueprints({ blueprintsOrder, blueprints }: AdminBlueprintsProps) {
   const { user } = useUser();
+  const handleAddExtraBlueprint = async () => {
+    const { success, message } = await addExtraBlueprint();
+    if (success) {
+      toast.success(message || "Success!");
+    }
+  };
   const handleSyncBlueprints = async () => {
     const result = await syncBlueprints();
     console.log(result);
@@ -60,11 +67,6 @@ export default function AdminBlueprints({ blueprintsOrder, blueprints }: AdminBl
     }
   };
 
-  // Debug: Log when component renders to verify it's working
-  useEffect(() => {
-    console.log('AdminBlueprints rendered, items count:', blueprintsOrderState.length);
-  }, [blueprintsOrderState.length]);
-
   return (
     <div className="max-h-[calc(100vh-48px)] bg-black p-8">
       <div className="max-w-[1040px] mx-auto">
@@ -80,6 +82,11 @@ export default function AdminBlueprints({ blueprintsOrder, blueprints }: AdminBl
               onClick={handleSyncBlueprints}
               className="bg-blue-500 text-white px-4 py-2 rounded-md">
               Sync Blueprints
+            </button>
+            <button
+              onClick={handleAddExtraBlueprint}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md">
+              Add Extra Blueprint
             </button>
           </div>
         )}
@@ -98,12 +105,10 @@ export default function AdminBlueprints({ blueprintsOrder, blueprints }: AdminBl
               <div className="grid grid-cols-10 gap-2">
                 {blueprintsOrderState.map((blueprintId) => {
                   const blueprint = blueprints.find((bp) => bp.id === blueprintId);
-                  if (!blueprint || !blueprint.icon) {
-                    return (
-                      <div key={blueprintId} className="bg-gray-200 rounded-md aspect-square"></div>
-                    );
+                  if (!blueprint) {
+                    console.log('Blueprint not found:', blueprintId);
+                    return null;
                   }
-
                   return (
                     <SortableItem key={blueprint.id} id={blueprint.id}>
                       <BlueprintComponent

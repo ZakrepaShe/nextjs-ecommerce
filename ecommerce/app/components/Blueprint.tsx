@@ -15,11 +15,19 @@ export function BlueprintComponent({
   handleFoundBlueprint,
   isDraggable = false
 }: BlueprintProps) {
+
+  if (blueprint.id.startsWith('extra_') || !blueprint.icon) {
+    return (
+      <div key={blueprint.id} className={`w-full h-full aspect-square flex flex-col overflow-hidden ${isDraggable ? '' : 'hover:opacity-90 transition-opacity cursor-pointer'}`}>
+        <div className="w-full h-full bg-black rounded-md" style={{ border: '1px solid rgba(255, 255, 255, 0.2)' }} />
+      </div>
+    );
+  }
+
   return (
     <div
       key={blueprint.id}
-      className={`w-full h-full aspect-square flex flex-col border overflow-hidden ${isDraggable ? '' : 'hover:opacity-90 transition-opacity cursor-pointer'
-        }`}
+      className={`w-full h-full aspect-square flex flex-col border overflow-hidden ${isDraggable ? '' : 'hover:opacity-90 transition-opacity cursor-pointer'}`}
       style={{
         border: isFound ? '1px solid rgb(255, 198, 0)' : '1px solid rgba(255, 255, 255, 0.2)',
         borderRadius: '5px',

@@ -102,10 +102,15 @@ export async function syncBlueprints() {
   }
 }
 
-export async function getBlueprints() {
+export async function getBlueprints(): Promise<Blueprint[]> {
   const { db } = await connectToDatabase();
-  const blueprints = await db.collection("blueprints").find({}).toArray();
-  return JSON.parse(JSON.stringify(blueprints));
+
+  return await Promise.all([
+    db.collection("blueprints").find({}).toArray(),
+    getExtraBlueprints(),
+  ]).then(([blueprints, extraBlueprints]) => {
+    return JSON.parse(JSON.stringify([...blueprints, ...extraBlueprints]));
+  });
 }
 
 export async function getUsersBlueprints(userId: string) {
@@ -240,4 +245,54 @@ export async function updateBlueprintsOrder(blueprintsOrder: string[]) {
       { type: "blueprints_order" },
       { $set: { blueprints: blueprintsOrder } }
     );
+}
+
+export async function getExtraBlueprints() {
+  const { db } = await connectToDatabase();
+  const extraBlueprints = await db
+    .collection("extra_blueprints")
+    .findOne({ type: "extra_blueprints" });
+
+  if (!extraBlueprints) {
+    return [];
+  }
+  return extraBlueprints.blueprints;
+}
+
+export async function addExtraBlueprint() {
+  const { db } = await connectToDatabase();
+  const extraBlueprintsRecord = await db
+    .collection("extra_blueprints")
+    .findOne({ type: "extra_blueprints" });
+
+  if (!extraBlueprintsRecord) {
+    await db.collection("extra_blueprints").insertOne({
+      type: "extra_blueprints",
+      blueprints: [],
+    });
+  }
+
+  const counter = (extraBlueprintsRecord?.blueprints?.length || 0) + 1;
+
+  await db.collection("extra_blueprints").findOneAndUpdate(
+    { type: "extra_blueprints" },
+    {
+      $set: {
+        blueprints: [
+          ...(extraBlueprintsRecord?.blueprints || []),
+          { id: `extra_${counter}`, icon: "" },
+        ],
+      },
+    }
+  );
+
+  const blueprintsOrder = await getBlueprintsOrder();
+  const newBlueprintsOrder = [...blueprintsOrder, `extra_${counter}`];
+
+  await updateBlueprintsOrder(newBlueprintsOrder);
+
+  return {
+    success: true,
+    message: "Extra blueprint added successfully.",
+  };
 }

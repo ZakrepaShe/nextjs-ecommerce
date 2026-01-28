@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUser } from "./UserProvider";
@@ -17,7 +17,7 @@ type AuthFormProps = {
   }>;
 };
 
-export default function AuthForm({ type, action }: AuthFormProps) {
+function AuthFormContent({ type, action }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,5 +93,13 @@ export default function AuthForm({ type, action }: AuthFormProps) {
         </button>
       </div>
     </form>
+  );
+}
+
+export default function AuthForm(props: AuthFormProps) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthFormContent {...props} />
+    </Suspense>
   );
 }
