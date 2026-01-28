@@ -29,19 +29,10 @@ export default function UserProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const syncUser = async () => {
       try {
-        console.log("[UserProvider] Calling getCurrentUser...");
         const serverUser = await getCurrentUser();
-        console.log("[UserProvider] getCurrentUser returned:", serverUser);
-
-        // Handle undefined response (Server Action failed)
-        if (serverUser === undefined) {
-          console.error("[UserProvider] Server Action returned undefined - possible deployment mismatch");
-          setUserState(null);
-        } else {
-          setUserState(serverUser);
-        }
+        setUserState(serverUser);
       } catch (error) {
-        console.error("[UserProvider] Error syncing user from server:", error);
+        console.error("Error syncing user from server:", error);
         setUserState(null);
       } finally {
         setIsLoading(false);
