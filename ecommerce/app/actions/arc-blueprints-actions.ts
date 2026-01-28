@@ -1,6 +1,7 @@
 "use server";
 
 import { ObjectId } from "mongodb";
+import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../api/db";
 import type { Blueprint, UserBlueprint, UserBlueprints } from "../types";
 
@@ -84,6 +85,10 @@ export async function syncBlueprints() {
         { $set: { total, lastSynced: new Date() } },
         { upsert: true }
       );
+
+    // Revalidate the pages that display blueprints
+    revalidatePath("/admin");
+    revalidatePath("/arc-raiders/blueprints");
 
     return {
       success: true,
@@ -245,6 +250,10 @@ export async function updateBlueprintsOrder(blueprintsOrder: string[]) {
       { type: "blueprints_order" },
       { $set: { blueprints: blueprintsOrder } }
     );
+
+  // Revalidate the pages that display blueprints
+  revalidatePath("/admin");
+  revalidatePath("/arc-raiders/blueprints");
 }
 
 export async function getExtraBlueprints() {
