@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUser } from "./UserProvider";
 import type { FrontendUser } from "../types";
@@ -20,6 +20,7 @@ type AuthFormProps = {
 export default function AuthForm({ type, action }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,7 +40,10 @@ export default function AuthForm({ type, action }: AuthFormProps) {
           setUser(result.user);
         }
         toast.success(result.message || "Success!");
-        router.push("/arc-raiders/blueprints");
+
+        // Redirect to the original page or default to blueprints
+        const redirectTo = searchParams.get("redirect") || "/arc-raiders/blueprints";
+        router.push(redirectTo);
       }
     } catch (error) {
       toast.error("An unexpected error occurred");

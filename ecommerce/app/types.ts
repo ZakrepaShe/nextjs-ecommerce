@@ -33,3 +33,15 @@ export type Blueprint = {
   guide_links: unknown[];
   game_asset_id: number | null;
 };
+
+export type UserBlueprint = {
+  id: string;
+  isFound: boolean;
+  isFavorite: boolean;
+};
+
+export type UserBlueprints = {
+  _id: ObjectId;
+  userId: string;
+  blueprints: Record<string, UserBlueprint>;
+};

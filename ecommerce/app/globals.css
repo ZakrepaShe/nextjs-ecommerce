@@ -25,3 +25,57 @@ body {
     text-wrap: balance;
   }
 }
+
+/* @dnd-kit Drag and Drop Styles with Smooth Animations */
+
+/* Sortable Item - Smooth transitions */
+.sortable-item {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 200ms ease,
+    box-shadow 200ms ease;
+  will-change: transform;
+}
+
+/* Active drag state - Enhanced visual feedback */
+.sortable-item-dragging {
+  z-index: 999;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(59, 130, 246, 0.4);
+  filter: brightness(1.1) saturate(1.2);
+  cursor: grabbing !important;
+}
+
+/* Prevent text selection during drag */
+[data-dnd-sortable] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Ensure images don't interfere with dragging */
+[data-dnd-sortable] img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Smooth overlay animation for dragging item */
+.dnd-overlay {
+  animation: fadeIn 150ms ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

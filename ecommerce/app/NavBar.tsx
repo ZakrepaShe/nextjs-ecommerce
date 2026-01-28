@@ -3,14 +3,23 @@
 import Link from "next/link";
 import { useUser } from "./components/UserProvider";
 import { useRouter } from "next/navigation";
+import { logout } from "./actions/user-actions";
+import toast from "react-hot-toast";
 
 export default function NavBar() {
   const { user, setUser } = useUser();
   const router = useRouter();
 
-  const handleLogout = () => {
-    setUser(null);
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch (error) {
+      toast.error("Failed to logout");
+      console.error("Logout error:", error);
+    }
   };
 
   return (

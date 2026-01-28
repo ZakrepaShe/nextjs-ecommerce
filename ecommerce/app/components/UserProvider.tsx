@@ -1,7 +1,8 @@
-"use client"; 
+"use client";
 
 import { useState, useEffect, useContext } from "react";
 import { createContext } from "react";
+import { getCurrentUser } from "../actions/user-actions";
 
 export type User = {
   _id?: string;
@@ -10,50 +11,43 @@ export type User = {
   isAdmin: boolean;
 };
 
-const STORAGE_KEY = "loggedInUser";
-
-export const UserContext = createContext<{ 
-  user: User | null; 
+export const UserContext = createContext<{
+  user: User | null;
   setUser: (user: User | null) => void;
-}>({ 
-  user: null, 
-  setUser: () => {} 
+  isLoading: boolean;
+}>({
+  user: null,
+  setUser: () => { },
+  isLoading: true,
 });
 
 export default function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Sync with server-side authentication on mount
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(STORAGE_KEY);
-      if (storedUser) {
-        setUserState(JSON.parse(storedUser));
+    const syncUser = async () => {
+      try {
+        const serverUser = await getCurrentUser();
+        setUserState(serverUser);
+      } catch (error) {
+        console.error("Error syncing user from server:", error);
+        setUserState(null);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading user from localStorage:", error);
-    } finally {
-      setIsLoaded(true);
-    }
+    };
+
+    syncUser();
   }, []);
 
-  // Save user to localStorage whenever it changes
   const setUser = (newUser: User | null) => {
     setUserState(newUser);
-    try {
-      if (newUser) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch (error) {
-      console.error("Error saving user to localStorage:", error);
-    }
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, isLoading }}>
       {children}
     </UserContext.Provider>
   );

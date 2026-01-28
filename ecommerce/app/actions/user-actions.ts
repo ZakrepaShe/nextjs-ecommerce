@@ -3,6 +3,11 @@
 import { connectToDatabase } from "@/app/api/db";
 import { Db } from "mongodb";
 import type { User, FrontendUser } from "../types";
+import {
+  setAuthCookie,
+  clearAuthCookie,
+  getAuthenticatedUser,
+} from "../lib/auth";
 
 const convertToFrontendUser = (user: User): FrontendUser => {
   return {
@@ -72,6 +77,10 @@ export async function login(name: string, password: string) {
       user: null,
     };
   }
+
+  // Set authentication cookie
+  await setAuthCookie(user.userId);
+
   return {
     success: true,
     message: "Login successful",
@@ -84,6 +93,8 @@ export async function register(name: string, password: string) {
   const user = await db.collection<User>("users").findOne({ name });
   if (user) {
     if (user.password === password) {
+      // Set authentication cookie for existing user
+      await setAuthCookie(user.userId);
       return {
         success: true,
         message: "User already exists and is logged in",
@@ -113,9 +124,24 @@ export async function register(name: string, password: string) {
     };
   }
 
+  // Set authentication cookie for new user
+  await setAuthCookie(insertedUser.userId);
+
   return {
     success: true,
     message: "User registered and logged in successfully",
     user: convertToFrontendUser(insertedUser),
   };
+}
+
+export async function logout() {
+  await clearAuthCookie();
+  return {
+    success: true,
+    message: "Logged out successfully",
+  };
+}
+
+export async function getCurrentUser() {
+  return await getAuthenticatedUser();
 }
