@@ -178,7 +178,7 @@ export async function getUsersBlueprints(userId: string) {
     );
 
     return {
-      blueprints: newBlueprints,
+      blueprints: { ...userBlueprints.blueprints, ...newBlueprints },
     };
   }
 

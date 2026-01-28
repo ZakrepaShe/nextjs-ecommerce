@@ -14,6 +14,18 @@ const authRoutes = ["/login", "/register"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip middleware for Server Actions (Next.js uses POST with Next-Action header)
+  const isServerAction =
+    request.headers.get("next-action") !== null ||
+    request.headers.get("x-action") !== null ||
+    (request.method === "POST" &&
+      request.headers.get("content-type")?.includes("multipart/form-data"));
+
+  if (isServerAction) {
+    return NextResponse.next();
+  }
+
   const sessionCookie = request.cookies.get("session_userId");
   const isAuthenticated = !!sessionCookie;
 
@@ -49,9 +61,10 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
+     * - _next/data (data fetching)
      * - favicon.ico (favicon file)
      * - public files (images, etc)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|bmp)).*)",
+    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|bmp)).*)",
   ],
 };
