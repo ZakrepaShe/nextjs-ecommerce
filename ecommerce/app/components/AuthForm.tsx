@@ -13,7 +13,7 @@ type AuthFormProps = {
   action: (name: string, password: string) => Promise<{
     success: boolean;
     message?: string;
-    user?: FrontendUser;
+    user: FrontendUser | null;
   }>;
 };
 

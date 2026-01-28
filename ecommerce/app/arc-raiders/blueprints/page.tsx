@@ -1,10 +1,10 @@
 import { getBlueprints, getBlueprintsOrder, getUsersBlueprints } from "@/app/actions/arc-blueprints-actions";
-import { getAuthenticatedUser } from "@/app/lib/auth";
+import { getCurrentUser } from "@/app/actions/user-actions";
 import { redirect } from "next/navigation";
 import Blueprints from "./Blueprints";
 
 export default async function BlueprintsPage() {
-  const user = await getAuthenticatedUser();
+  const user = await getCurrentUser();
 
   // Redirect to login if not authenticated
   if (!user) {
