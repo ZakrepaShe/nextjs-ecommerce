@@ -14,19 +14,7 @@ npm install
 
 ## Deployment
 
-The system includes a build script that ensures templates are available in serverless environments:
-
-- Templates are stored in `public/templates/` for development
-- During build, `scripts/copy-templates.js` copies templates to `.next/server/public/templates/`
-- This ensures templates are accessible in Vercel's serverless functions
-
-When deploying, simply run:
-
-```bash
-npm run build
-```
-
-The postbuild script will automatically copy templates to the correct location.
+Templates are automatically included in serverless deployments via `experimental.outputFileTracingIncludes` in `next.config.mjs`. This ensures the `public/templates/` directory is accessible in production environments like Vercel.
 
 ## Usage
 

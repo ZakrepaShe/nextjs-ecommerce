@@ -81,58 +81,19 @@ const MATCH_THRESHOLD = 0.75;
 // Get templates directory path
 function getTemplatesDir() {
   const cwd = process.cwd();
-
-  // In production/serverless environments, __dirname points to the .next/server directory
-  // We need to look for templates in multiple possible locations
+  
   const candidates = [
-    // PRIORITY: Build script copies templates here for serverless deployment
-    path.join(cwd, ".next", "server", "public", "templates"),
-    // Standard Next.js dev/prod location
+    // Standard location (works in dev and production via outputFileTracingIncludes)
     path.join(cwd, "public", "templates"),
-    // If CWD is the app directory
+    // Fallback locations
     path.join(cwd, "..", "public", "templates"),
-    // If CWD is the root project directory
     path.join(cwd, "ecommerce", "public", "templates"),
-    // Other Vercel serverless locations
-    path.join(cwd, ".next", "static", "templates"),
-    path.join(cwd, "..", "..", "public", "templates"),
-    path.join(cwd, "../../public", "templates"),
   ];
 
-  // Log for debugging in production
-  console.log("Looking for templates directory, cwd:", cwd);
-
   for (const dir of candidates) {
-    console.log("Checking:", dir, "exists:", fs.existsSync(dir));
     if (fs.existsSync(dir)) {
-      console.log("Found templates at:", dir);
       return dir;
     }
-  }
-
-  // List what's actually in the current directory for debugging
-  try {
-    console.log("Contents of cwd:", fs.readdirSync(cwd));
-
-    // Check if .next exists and what's in it
-    const nextDir = path.join(cwd, ".next");
-    if (fs.existsSync(nextDir)) {
-      console.log("Contents of .next:", fs.readdirSync(nextDir));
-
-      const serverDir = path.join(nextDir, "server");
-      if (fs.existsSync(serverDir)) {
-        console.log("Contents of .next/server:", fs.readdirSync(serverDir));
-      }
-    }
-
-    if (fs.existsSync(path.join(cwd, "public"))) {
-      console.log(
-        "Contents of public:",
-        fs.readdirSync(path.join(cwd, "public"))
-      );
-    }
-  } catch (e) {
-    console.error("Error listing directories:", e);
   }
 
   return null;
