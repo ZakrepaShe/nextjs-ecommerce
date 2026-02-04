@@ -80,16 +80,43 @@ const MATCH_THRESHOLD = 0.75;
 
 // Get templates directory path
 function getTemplatesDir() {
+  // In production/serverless environments, __dirname points to the .next/server directory
+  // We need to look for templates in multiple possible locations
   const candidates = [
+    // Standard Next.js dev/prod location
     path.join(process.cwd(), "public", "templates"),
+    // If CWD is the app directory
     path.join(process.cwd(), "..", "public", "templates"),
+    // If CWD is the root project directory
     path.join(process.cwd(), "ecommerce", "public", "templates"),
+    // Vercel serverless function location - relative to .next directory
+    path.join(process.cwd(), ".next", "static", "templates"),
+    // Alternative Vercel location
+    path.join(process.cwd(), "../../public", "templates"),
   ];
 
+  // Log for debugging in production
+  console.log("Looking for templates directory, cwd:", process.cwd());
+
   for (const dir of candidates) {
+    console.log("Checking:", dir, "exists:", fs.existsSync(dir));
     if (fs.existsSync(dir)) {
+      console.log("Found templates at:", dir);
       return dir;
     }
+  }
+
+  // List what's actually in the current directory for debugging
+  try {
+    console.log("Contents of cwd:", fs.readdirSync(process.cwd()));
+    if (fs.existsSync(path.join(process.cwd(), "public"))) {
+      console.log(
+        "Contents of public:",
+        fs.readdirSync(path.join(process.cwd(), "public"))
+      );
+    }
+  } catch (e) {
+    console.error("Error listing directories:", e);
   }
 
   return null;
