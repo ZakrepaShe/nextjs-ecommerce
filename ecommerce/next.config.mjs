@@ -6,6 +6,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  outputFileTracingIncludes: {
+    "*": ["public/templates/**/*"],
+  },
 };
 
 export default nextConfig;

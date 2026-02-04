@@ -80,7 +80,18 @@ const MATCH_THRESHOLD = 0.75;
 
 // Get templates directory path
 function getTemplatesDir() {
-  return path.join(process.cwd(), "public", "templates");
+  const candidates = [
+    path.join(process.cwd(), "public", "templates"),
+    path.join(process.cwd(), "..", "public", "templates"),
+  ];
+
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) {
+      return dir;
+    }
+  }
+
+  return null;
 }
 
 // Load image to OpenCV Mat
@@ -99,7 +110,7 @@ async function loadTemplates() {
   const templates = [];
   const templatesDir = getTemplatesDir();
 
-  if (!fs.existsSync(templatesDir)) {
+  if (!templatesDir) {
     throw new Error("Templates directory not found");
   }
 
