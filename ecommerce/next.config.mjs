@@ -6,8 +6,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  outputFileTracingIncludes: {
-    "*": ["public/templates/**/*"],
+  experimental: {
+    outputFileTracingIncludes: {
+      "/arc-raiders/blueprints": ["./public/templates/**/*"],
+      "/api/*": ["./public/templates/**/*"],
+    },
   },
 };
 

@@ -12,6 +12,22 @@ Install dependencies:
 npm install
 ```
 
+## Deployment
+
+The system includes a build script that ensures templates are available in serverless environments:
+
+- Templates are stored in `public/templates/` for development
+- During build, `scripts/copy-templates.js` copies templates to `.next/server/public/templates/`
+- This ensures templates are accessible in Vercel's serverless functions
+
+When deploying, simply run:
+
+```bash
+npm run build
+```
+
+The postbuild script will automatically copy templates to the correct location.
+
 ## Usage
 
 1. Navigate to the Blueprints page
@@ -23,8 +39,6 @@ npm install
 
 Blueprint templates are stored in `public/templates/` directory.
 Template files must match blueprint IDs and be in PNG format.
-
-The `public` directory works in both development (localhost) and production (Vercel).
 
 ## Configuration
 

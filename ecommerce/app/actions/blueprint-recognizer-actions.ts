@@ -80,23 +80,27 @@ const MATCH_THRESHOLD = 0.75;
 
 // Get templates directory path
 function getTemplatesDir() {
+  const cwd = process.cwd();
+
   // In production/serverless environments, __dirname points to the .next/server directory
   // We need to look for templates in multiple possible locations
   const candidates = [
+    // PRIORITY: Build script copies templates here for serverless deployment
+    path.join(cwd, ".next", "server", "public", "templates"),
     // Standard Next.js dev/prod location
-    path.join(process.cwd(), "public", "templates"),
+    path.join(cwd, "public", "templates"),
     // If CWD is the app directory
-    path.join(process.cwd(), "..", "public", "templates"),
+    path.join(cwd, "..", "public", "templates"),
     // If CWD is the root project directory
-    path.join(process.cwd(), "ecommerce", "public", "templates"),
-    // Vercel serverless function location - relative to .next directory
-    path.join(process.cwd(), ".next", "static", "templates"),
-    // Alternative Vercel location
-    path.join(process.cwd(), "../../public", "templates"),
+    path.join(cwd, "ecommerce", "public", "templates"),
+    // Other Vercel serverless locations
+    path.join(cwd, ".next", "static", "templates"),
+    path.join(cwd, "..", "..", "public", "templates"),
+    path.join(cwd, "../../public", "templates"),
   ];
 
   // Log for debugging in production
-  console.log("Looking for templates directory, cwd:", process.cwd());
+  console.log("Looking for templates directory, cwd:", cwd);
 
   for (const dir of candidates) {
     console.log("Checking:", dir, "exists:", fs.existsSync(dir));
@@ -108,11 +112,23 @@ function getTemplatesDir() {
 
   // List what's actually in the current directory for debugging
   try {
-    console.log("Contents of cwd:", fs.readdirSync(process.cwd()));
-    if (fs.existsSync(path.join(process.cwd(), "public"))) {
+    console.log("Contents of cwd:", fs.readdirSync(cwd));
+
+    // Check if .next exists and what's in it
+    const nextDir = path.join(cwd, ".next");
+    if (fs.existsSync(nextDir)) {
+      console.log("Contents of .next:", fs.readdirSync(nextDir));
+
+      const serverDir = path.join(nextDir, "server");
+      if (fs.existsSync(serverDir)) {
+        console.log("Contents of .next/server:", fs.readdirSync(serverDir));
+      }
+    }
+
+    if (fs.existsSync(path.join(cwd, "public"))) {
       console.log(
         "Contents of public:",
-        fs.readdirSync(path.join(process.cwd(), "public"))
+        fs.readdirSync(path.join(cwd, "public"))
       );
     }
   } catch (e) {
