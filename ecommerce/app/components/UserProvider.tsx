@@ -17,11 +17,15 @@ export const UserContext = createContext<{
   isLoading: boolean;
 }>({
   user: null,
-  setUser: () => { },
+  setUser: () => {},
   isLoading: true,
 });
 
-export default function UserProvider({ children }: { children: React.ReactNode }) {
+export default function UserProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

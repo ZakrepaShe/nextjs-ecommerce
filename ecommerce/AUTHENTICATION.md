@@ -19,6 +19,7 @@ Core authentication utilities that manage session cookies:
 - `requireAuth()` - Throws an error if user is not authenticated
 
 **Cookie Configuration:**
+
 - Name: `session_userId`
 - HTTP-only: Yes (prevents JavaScript access - XSS protection)
 - Secure: Yes in production (HTTPS only)
@@ -31,12 +32,14 @@ Core authentication utilities that manage session cookies:
 Protects routes at the edge before they even load:
 
 **Protected Routes** (require authentication):
+
 - `/arc-raiders/blueprints`
 - `/cart`
 - `/checkout`
 - `/admin`
 
 **Auth Routes** (redirect if already authenticated):
+
 - `/login`
 - `/register`
 
@@ -56,6 +59,7 @@ Server actions that handle authentication operations:
 #### 1. **UserProvider** (`app/components/UserProvider.tsx`)
 
 React Context provider that:
+
 - Syncs with server authentication on mount by calling `getCurrentUser()`
 - Provides user state to all client components
 - Exposes `user`, `setUser`, and `isLoading` values
@@ -63,6 +67,7 @@ React Context provider that:
 #### 2. **AuthForm** (`app/components/AuthForm.tsx`)
 
 Handles login/register forms:
+
 - Calls server actions for authentication
 - Updates client-side user context
 - Handles redirect parameter for post-login navigation
@@ -79,11 +84,11 @@ import { redirect } from "next/navigation";
 
 export default async function MyPage() {
   const user = await getAuthenticatedUser();
-  
+
   if (!user) {
     redirect("/login");
   }
-  
+
   // Use user.userId, user.name, user.isAdmin
   return <div>Hello {user.name}</div>;
 }
@@ -100,15 +105,15 @@ import { useUser } from "@/app/components/UserProvider";
 
 export default function MyComponent() {
   const { user, isLoading } = useUser();
-  
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!user) {
     return <div>Please log in</div>;
   }
-  
+
   return <div>Hello {user.name}</div>;
 }
 ```
@@ -124,11 +129,11 @@ import { getAuthenticatedUser } from "@/app/lib/auth";
 
 export async function myAction() {
   const user = await getAuthenticatedUser();
-  
+
   if (!user) {
     return { error: "Not authenticated" };
   }
-  
+
   // Use user.userId for database operations
   // ...
 }
@@ -137,23 +142,28 @@ export async function myAction() {
 ## Security Features
 
 ### 1. **HTTP-Only Cookies**
+
 - Cookies are inaccessible to JavaScript (prevents XSS attacks)
 - Only the server can read/write authentication cookies
 
 ### 2. **Secure Cookie Attributes**
+
 - `secure`: Only transmitted over HTTPS in production
 - `sameSite: lax`: Protection against CSRF attacks
 - Short-lived: 7-day expiration
 
 ### 3. **No User ID in URLs**
+
 - User ID never appears in URLs (prevents enumeration attacks)
 - Authentication is always validated server-side
 
 ### 4. **Middleware Protection**
+
 - Routes are protected at the edge before rendering
 - Unauthorized access is immediately redirected
 
 ### 5. **Server-Side Validation**
+
 - Every protected page validates authentication on the server
 - Client-side context is only for UI convenience
 
@@ -209,11 +219,13 @@ export async function myAction() {
 ### What Changed
 
 **Before:**
+
 - Authentication state stored in localStorage only
 - No server-side session management
 - User ID could be manipulated by clients
 
 **After:**
+
 - HTTP-only cookies for session management
 - Server-side authentication validation
 - Secure, tamper-proof user sessions
@@ -221,6 +233,7 @@ export async function myAction() {
 ### Backwards Compatibility
 
 The `UserProvider` still provides the same interface:
+
 - `user` - Current user object
 - `setUser()` - Update user state
 
@@ -229,15 +242,18 @@ However, it now syncs with server authentication instead of localStorage.
 ## Troubleshooting
 
 ### User not persisting between refreshes
+
 - Check that cookies are being set (DevTools → Application → Cookies)
 - Verify `secure` flag matches environment (should be false in development)
 
 ### Infinite redirect loops
+
 - Check middleware matcher configuration
 - Ensure `/login` and `/register` are in `authRoutes`
 - Verify cookie name matches between middleware and auth library
 
 ### "Not authenticated" errors
+
 - Ensure server actions call `getAuthenticatedUser()`
 - Check cookie expiration (7 days default)
 - Verify database connection is working

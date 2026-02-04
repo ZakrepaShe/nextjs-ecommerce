@@ -42,7 +42,10 @@ export default function NavBar() {
             </Link>
           </li> */}
           <li>
-            <Link href="/arc-raiders/blueprints" className="text-gray-700 hover:text-black">
+            <Link
+              href="/arc-raiders/blueprints"
+              className="text-gray-700 hover:text-black"
+            >
               Arc Raiders
             </Link>
           </li>

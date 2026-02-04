@@ -10,7 +10,10 @@ export type AuthFormType = "login" | "register";
 
 type AuthFormProps = {
   type: AuthFormType;
-  action: (name: string, password: string) => Promise<{
+  action: (
+    name: string,
+    password: string
+  ) => Promise<{
     success: boolean;
     message?: string;
     user: FrontendUser | null;
@@ -42,7 +45,8 @@ function AuthFormContent({ type, action }: AuthFormProps) {
         toast.success(result.message || "Success!");
 
         // Redirect to the original page or default to blueprints
-        const redirectTo = searchParams.get("redirect") || "/arc-raiders/blueprints";
+        const redirectTo =
+          searchParams.get("redirect") || "/arc-raiders/blueprints";
         router.push(redirectTo);
       }
     } catch (error) {
