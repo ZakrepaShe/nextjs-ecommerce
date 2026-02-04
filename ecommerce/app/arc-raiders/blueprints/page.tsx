@@ -7,6 +7,8 @@ import { getCurrentUser } from "@/app/actions/user-actions";
 import { redirect } from "next/navigation";
 import Blueprints from "./Blueprints";
 
+export const runtime = "nodejs";
+
 export default async function BlueprintsPage() {
   const user = await getCurrentUser();
 

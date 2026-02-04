@@ -83,6 +83,7 @@ function getTemplatesDir() {
   const candidates = [
     path.join(process.cwd(), "public", "templates"),
     path.join(process.cwd(), "..", "public", "templates"),
+    path.join(process.cwd(), "ecommerce", "public", "templates"),
   ];
 
   for (const dir of candidates) {
@@ -111,7 +112,7 @@ async function loadTemplates() {
   const templatesDir = getTemplatesDir();
 
   if (!templatesDir) {
-    throw new Error("Templates directory not found");
+    throw new Error(`Templates directory not found (cwd: ${process.cwd()})`);
   }
 
   const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith(".png"));
