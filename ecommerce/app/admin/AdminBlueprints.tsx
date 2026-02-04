@@ -129,11 +129,8 @@ export default function AdminBlueprints({
                         blueprint={blueprint}
                         isFound={false}
                         isFavorite={false}
-                        handleUnfoundBlueprint={() => {}}
-                        handleFoundBlueprint={() => {}}
-                        handleFavoriteBlueprint={() => {}}
-                        handleUnfavoriteBlueprint={() => {}}
                         isDraggable={true}
+                        isHighlighted={false}
                       />
                     </SortableItem>
                   );

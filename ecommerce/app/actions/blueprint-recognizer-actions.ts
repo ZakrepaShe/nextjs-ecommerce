@@ -81,7 +81,7 @@ const MATCH_THRESHOLD = 0.75;
 // Get templates directory path
 function getTemplatesDir() {
   const cwd = process.cwd();
-  
+
   const candidates = [
     // Standard location (works in dev and production via outputFileTracingIncludes)
     path.join(cwd, "public", "templates"),

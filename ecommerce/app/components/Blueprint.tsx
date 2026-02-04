@@ -4,11 +4,12 @@ type BlueprintProps = {
   blueprint: Blueprint;
   isFound: boolean;
   isFavorite: boolean;
-  handleUnfoundBlueprint: (blueprintId: string) => void;
-  handleFoundBlueprint: (blueprintId: string) => void;
-  handleFavoriteBlueprint: (blueprintId: string) => void;
-  handleUnfavoriteBlueprint: (blueprintId: string) => void;
+  handleUnfavoriteBlueprint?: (blueprintId: string) => void;
+  handleFavoriteBlueprint?: (blueprintId: string) => void;
+  handleFoundBlueprint?: (blueprintId: string) => void;
+  handleUnfoundBlueprint?: (blueprintId: string) => void;
   isDraggable?: boolean;
+  isHighlighted?: boolean;
 };
 
 export function BlueprintComponent({
@@ -20,6 +21,7 @@ export function BlueprintComponent({
   handleFavoriteBlueprint,
   handleUnfavoriteBlueprint,
   isDraggable = false,
+  isHighlighted = false,
 }: BlueprintProps) {
   if (blueprint.id.startsWith("extra_") || !blueprint.icon) {
     return (
@@ -40,7 +42,10 @@ export function BlueprintComponent({
       key={blueprint.id}
       className={`w-full h-full aspect-square flex flex-col border overflow-hidden ${isDraggable ? "" : "hover:opacity-90 transition-opacity cursor-pointer"}`}
       style={{
-        border: isFound
+        border:
+         isHighlighted
+          ? "1px solid rgb(0, 89, 255)"
+          : isFound
           ? "1px solid white"
           : isFavorite
             ? "1px solid rgb(255, 198, 0)"
@@ -54,9 +59,9 @@ export function BlueprintComponent({
           return;
         }
         if (isFound) {
-          handleUnfoundBlueprint(blueprint.id);
+          handleUnfoundBlueprint?.(blueprint.id);
         } else {
-          handleFoundBlueprint(blueprint.id);
+          handleFoundBlueprint?.(blueprint.id);
         }
       }}
     >
@@ -122,9 +127,9 @@ export function BlueprintComponent({
               return;
             }
             if (isFavorite) {
-              handleUnfavoriteBlueprint(blueprint.id);
+              handleUnfavoriteBlueprint?.(blueprint.id);
             } else {
-              handleFavoriteBlueprint(blueprint.id);
+              handleFavoriteBlueprint?.(blueprint.id);
             }
           }}
         >

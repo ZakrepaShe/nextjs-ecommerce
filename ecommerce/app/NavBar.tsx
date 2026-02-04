@@ -46,7 +46,12 @@ export default function NavBar() {
               href="/arc-raiders/blueprints"
               className="text-gray-700 hover:text-black"
             >
-              Arc Raiders
+              My Blueprints
+            </Link>
+          </li>
+          <li>
+            <Link href="/arc-raiders/users" className="text-gray-700 hover:text-black">
+              Friends Blueprints
             </Link>
           </li>
           {user?.isAdmin && (

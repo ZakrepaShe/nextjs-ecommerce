@@ -171,7 +171,7 @@ export async function register(name: string, password: string) {
   const userId = await getNextUserId(db);
   const newUser = await db
     .collection("users")
-    .insertOne({ userId, name, password });
+    .insertOne({ userId, name, password, isAdmin: false });
 
   const insertedUser = await db
     .collection<User>("users")
@@ -205,4 +205,13 @@ export async function logout() {
 
 export async function getCurrentUser() {
   return await getAuthenticatedUser();
+}
+
+export async function getUsers() {
+  const { db } = await connectToDatabase();
+  const users = await db.collection<User>("users").find({}).toArray();
+  return users
+    .map(convertToFrontendUser)
+    .filter((user) => !user.isAdmin)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
