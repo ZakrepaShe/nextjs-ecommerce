@@ -79,13 +79,9 @@ export default function AdminBlueprints({
     <div className="max-h-[calc(100vh-48px)] bg-black p-8">
       <div className="max-w-[1040px] mx-auto">
         {/* Header */}
-        <h1 className="text-4xl font-bold mb-4">Admin</h1>
+        <h1 className="text-4xl font-bold text-white mb-4">Admin</h1>
         {!user?.isAdmin ? (
-          <div className="text-center">
-            <p className="text-gray-600 mb-2">
-              You are not authorized to access this page
-            </p>
-          </div>
+          null
         ) : (
           <div className="text-center mb-4">
             <button
@@ -105,39 +101,48 @@ export default function AdminBlueprints({
 
         {/* Grid Container */}
         <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={blueprintsOrderState}
-              strategy={rectSortingStrategy}
+          {user?.isAdmin ? (
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="grid grid-cols-10 gap-2">
-                {blueprintsOrderState.map((blueprintId) => {
-                  const blueprint = blueprints.find(
-                    (bp) => bp.id === blueprintId
-                  );
-                  if (!blueprint) {
-                    console.log("Blueprint not found:", blueprintId);
-                    return null;
-                  }
-                  return (
-                    <SortableItem key={blueprint.id} id={blueprint.id}>
-                      <BlueprintComponent
-                        blueprint={blueprint}
-                        isFound={false}
-                        isFavorite={false}
-                        isDraggable={true}
-                        isHighlighted={false}
-                      />
-                    </SortableItem>
-                  );
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={blueprintsOrderState}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-10 gap-2">
+                  {blueprintsOrderState.map((blueprintId) => {
+                    const blueprint = blueprints.find(
+                      (bp) => bp.id === blueprintId
+                    );
+                    if (!blueprint) {
+                      console.log("Blueprint not found:", blueprintId);
+                      return null;
+                    }
+                    return (
+                      <SortableItem key={blueprint.id} id={blueprint.id}>
+                        <BlueprintComponent
+                          blueprint={blueprint}
+                          isFound={false}
+                          isFavorite={false}
+                          isDraggable={true}
+                          isHighlighted={false}
+                        />
+                      </SortableItem>
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div className="text-center min-h-[calc(100vh-200px)] flex items-center justify-center">
+              <p className="text-white mb-2">
+                You are not authorized to access this page
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

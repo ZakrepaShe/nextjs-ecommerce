@@ -75,8 +75,8 @@ const MAX_AREA = 25000;
 const MIN_ASPECT = 0.8;
 const MAX_ASPECT = 1.2;
 const POSITION_EPS = 6;
-const SLOT_SIZE = 64;
-const MATCH_THRESHOLD = 0.75;
+const SLOT_SIZE = 128;
+const MATCH_THRESHOLD = 0.8;
 
 // Get templates directory path
 function getTemplatesDir() {
@@ -110,6 +110,32 @@ async function loadImageToMat(buffer: Buffer) {
   return mat;
 }
 
+// Extract center region (blueprint content only, excluding borders)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractCenterRegion(mat: any) {
+  // Extract center 60% of the image (excludes border)
+  const width = mat.cols;
+  const height = mat.rows;
+  const cropWidth = Math.floor(width * 0.6);
+  const cropHeight = Math.floor(height * 0.6);
+  const x = Math.floor((width - cropWidth) / 2);
+  const y = Math.floor((height - cropHeight) / 2);
+
+  const roi = mat.roi(new cv.Rect(x, y, cropWidth, cropHeight));
+  const center = roi.clone();
+  roi.delete();
+
+  return center;
+}
+
+// Preprocess image for better matching
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function preprocessImage(grayMat: any) {
+  // Just extract center region to focus on blueprint content
+  const center = extractCenterRegion(grayMat);
+  return center;
+}
+
 // Load templates
 async function loadTemplates() {
   const templates = [];
@@ -132,9 +158,13 @@ async function loadTemplates() {
     cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
     mat.delete();
 
+    // Apply preprocessing to template
+    const processed = preprocessImage(gray);
+    gray.delete();
+
     templates.push({
       name: path.basename(file, ".png"),
-      mat: gray,
+      mat: processed,
     });
   }
 
@@ -213,35 +243,52 @@ function detectSlots(src: any) {
   return dedupeAndSort(rects);
 }
 
-// Match slot against templates
+// Match slot against templates using template matching only
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function matchSlot(slotMat: any, templates: any[]) {
   const slotGray = new cv.Mat();
   cv.cvtColor(slotMat, slotGray, cv.COLOR_RGBA2GRAY);
+
+  // Apply same preprocessing to slot as templates
+  const slotProcessed = preprocessImage(slotGray);
+  slotGray.delete();
 
   let best = {
     name: null as string | null,
     confidence: 0,
   };
 
+  // FOR DEBUGGING ONLY
+  // const allResults: { name: string | null; confidence: number }[] = [];
+
   for (const tpl of templates) {
+    // Template matching only (100% weight)
     const result = new cv.Mat();
-
-    cv.matchTemplate(slotGray, tpl.mat, result, cv.TM_CCOEFF_NORMED);
-
+    cv.matchTemplate(slotProcessed, tpl.mat, result, cv.TM_CCOEFF_NORMED);
     const mm = cv.minMaxLoc(result);
+    result.delete();
 
-    if (mm.maxVal > best.confidence) {
+    const score = mm.maxVal;
+
+    // FOR DEBUGGING ONLY
+    // allResults.push({
+    //   name: tpl.name,
+    //   confidence: score,
+    // });
+
+    if (score > best.confidence) {
       best = {
         name: tpl.name,
-        confidence: mm.maxVal,
+        confidence: score,
       };
     }
-
-    result.delete();
   }
 
-  slotGray.delete();
+  // Cleanup
+  slotProcessed.delete();
+
+  // FOR DEBUGGING ONLY
+  // console.table(allResults);
 
   return best;
 }
@@ -346,7 +393,12 @@ export async function recognizeBlueprintsFromImage(
 
     // Cleanup
     mat.delete();
-    templates.forEach((t) => t.mat.delete());
+    templates.forEach((t) => {
+      t.mat.delete();
+    });
+
+    // FOR DEBUGGING ONLY
+    // console.table(matches);
 
     // Update user blueprints
     const foundBlueprints = matches.filter(

@@ -201,7 +201,7 @@ export default function Blueprints({
                 className="text-white text-base bg-transparent border-b border-white focus:outline-none"
               />
             </div>
-            <div className="bg-white text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
+            <div className="bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -213,7 +213,7 @@ export default function Blueprints({
               />
               <label
                 htmlFor="blueprint-upload"
-                className={`cursor-pointer ${isProcessing ? "opacity-50" : ""}`}
+                className={`cursor-pointer block px-4 py-2 ${isProcessing ? "opacity-50" : ""}`}
               >
                 {isProcessing ? "Processing..." : "Upload Screenshot"}
               </label>

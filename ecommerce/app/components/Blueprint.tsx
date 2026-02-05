@@ -43,15 +43,15 @@ export function BlueprintComponent({
       className={`w-full h-full aspect-square flex flex-col border overflow-hidden ${isDraggable ? "" : "hover:opacity-90 transition-opacity cursor-pointer"}`}
       style={{
         border:
-         isHighlighted
-          ? "1px solid rgb(0, 89, 255)"
-          : isFound
-          ? "1px solid white"
-          : isFavorite
-            ? "1px solid rgb(255, 198, 0)"
-            : "1px solid rgba(255, 255, 255, 0.2)",
+          isHighlighted
+            ? "1px solid rgb(0, 89, 255)"
+            : isFound
+              ? "1px solid rgba(255, 255, 255, 0.2)"
+              : isFavorite
+                ? "1px solid rgb(255, 198, 0)"
+                : "1px solid rgba(255, 255, 255, 0.6)",
         borderRadius: "5px",
-        opacity: isFound ? 0.5 : 1,
+        opacity: isFound ? 0.6 : 1,
       }}
       onClick={(e) => {
         // Don't handle click if draggable - let GridItem handle drag instead
