@@ -4,7 +4,7 @@ import { updateUserBlueprintFavorite, updateUserBlueprintFound } from "@/app/act
 import { recognizeBlueprintsFromImage } from "@/app/actions/blueprint-recognizer-actions";
 import { useUser } from "@/app/components/UserProvider";
 import type { Blueprint, UserBlueprint } from "@/app/types";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
 import toast from "react-hot-toast";
 
@@ -92,9 +92,7 @@ export default function Blueprints({
     }));
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
+  const processImage = async (file: File) => {
     if (!file) {
       return;
     }
@@ -166,6 +164,51 @@ export default function Blueprints({
       setIsProcessing(false);
     }
   };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processImage(file);
+    }
+  };
+
+  const handlePaste = useCallback(async (e: ClipboardEvent) => {
+    if (isProcessing) {
+      return;
+    }
+
+    const items = e.clipboardData?.items;
+    if (!items) {
+      return;
+    }
+
+    // Find image in clipboard
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf("image") !== -1) {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        if (blob) {
+          // Convert blob to File object
+          const file = new File([blob], "pasted-image.png", {
+            type: blob.type || "image/png",
+          });
+          await processImage(file);
+        }
+        break;
+      }
+    }
+  }, [isProcessing]);
+
+  useEffect(() => {
+    // Add paste event listener
+    window.addEventListener("paste", handlePaste);
+
+    return () => {
+      // Cleanup: remove event listener on unmount
+      window.removeEventListener("paste", handlePaste);
+    };
+  }, [handlePaste]);
 
   return (
     <div className="max-h-[calc(100vh-48px)] bg-black p-8">

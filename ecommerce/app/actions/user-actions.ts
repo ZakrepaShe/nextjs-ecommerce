@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/app/api/db";
 import { Db } from "mongodb";
 import type { User, FrontendUser } from "../types";
+import { revalidatePath } from "next/cache";
 
 const SESSION_COOKIE_NAME = "session_userId";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -187,6 +188,8 @@ export async function register(name: string, password: string) {
 
   // Set authentication cookie for new user
   await setAuthCookie(insertedUser.userId);
+
+  revalidatePath("/arc-raiders/users");
 
   return {
     success: true,

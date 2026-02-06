@@ -89,6 +89,7 @@ export async function syncBlueprints() {
     // Revalidate the pages that display blueprints
     revalidatePath("/admin");
     revalidatePath("/arc-raiders/blueprints");
+    revalidatePath("/arc-raiders/users");
 
     return {
       success: true,
@@ -254,6 +255,7 @@ export async function updateBlueprintsOrder(blueprintsOrder: string[]) {
   // Revalidate the pages that display blueprints
   revalidatePath("/admin");
   revalidatePath("/arc-raiders/blueprints");
+  revalidatePath("/arc-raiders/users");
 }
 
 export async function getExtraBlueprints() {
