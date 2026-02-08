@@ -1,6 +1,5 @@
 "use server";
 
-import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../api/db";
 import type { Blueprint, UserBlueprint, UserBlueprints } from "../types";
@@ -129,7 +128,7 @@ export async function getUsersBlueprints(userId: string) {
     .collection<UserBlueprints>("users_blueprints")
     .findOne({ userId });
 
-  // If user blueprints don't exist, create them
+  // If user blueprints don't exist, create them atomically with upsert
   if (!userBlueprints) {
     const blueprints = await db.collection("blueprints").find({}).toArray();
 
@@ -145,11 +144,17 @@ export async function getUsersBlueprints(userId: string) {
       {} as Record<string, UserBlueprint>
     );
 
-    await db.collection<UserBlueprints>("users_blueprints").insertOne({
-      _id: new ObjectId(),
-      userId,
-      blueprints: initialBlueprints,
-    });
+    // Use findOneAndUpdate with upsert + $setOnInsert to avoid race condition duplicates
+    await db.collection<UserBlueprints>("users_blueprints").findOneAndUpdate(
+      { userId },
+      {
+        $setOnInsert: {
+          userId,
+          blueprints: initialBlueprints,
+        },
+      },
+      { upsert: true, returnDocument: "after" }
+    );
 
     return {
       blueprints: initialBlueprints,
@@ -205,8 +210,7 @@ export async function updateUserBlueprintFound(
       $set: {
         [`blueprints.${blueprintId}.isFound`]: isFound,
       },
-    },
-    { upsert: true }
+    }
   );
 }
 

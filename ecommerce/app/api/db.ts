@@ -20,5 +20,10 @@ export async function connectToDatabase() {
   await cachedClient.connect();
   cachedDb = cachedClient.db("ecommerce-nextjs");
 
+  // Create unique indexes once on first connection
+  await cachedDb
+    .collection("users_blueprints")
+    .createIndex({ userId: 1 }, { unique: true });
+
   return { client: cachedClient, db: cachedDb };
 }
