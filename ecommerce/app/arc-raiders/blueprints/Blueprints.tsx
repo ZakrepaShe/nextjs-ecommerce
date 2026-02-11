@@ -38,17 +38,14 @@ export default function Blueprints({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalCount = blueprints.length;
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  if (!user) {
-    return <div>Not logged in</div>;
-  }
+  const userId = user?.userId;
 
   const handleFoundBlueprint = (blueprintId: string) => {
+    if (!userId) {
+      return;
+    }
     setFoundBlueprintsCount((prev) => prev + 1);
-    updateUserBlueprintFound(user?.userId, blueprintId, true);
+    updateUserBlueprintFound(userId, blueprintId, true);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
@@ -59,8 +56,11 @@ export default function Blueprints({
   };
 
   const handleUnfoundBlueprint = (blueprintId: string) => {
+    if (!userId) {
+      return;
+    }
     setFoundBlueprintsCount((prev) => prev - 1);
-    updateUserBlueprintFound(user?.userId, blueprintId, false);
+    updateUserBlueprintFound(userId, blueprintId, false);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
@@ -71,7 +71,10 @@ export default function Blueprints({
   };
 
   const handleFavoriteBlueprint = (blueprintId: string) => {
-    updateUserBlueprintFavorite(user?.userId, blueprintId, true);
+    if (!userId) {
+      return;
+    }
+    updateUserBlueprintFavorite(userId, blueprintId, true);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
@@ -82,7 +85,10 @@ export default function Blueprints({
   };
 
   const handleUnfavoriteBlueprint = (blueprintId: string) => {
-    updateUserBlueprintFavorite(user?.userId, blueprintId, false);
+    if (!userId) {
+      return;
+    }
+    updateUserBlueprintFavorite(userId, blueprintId, false);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
@@ -209,6 +215,13 @@ export default function Blueprints({
       window.removeEventListener("paste", handlePaste);
     };
   }, [handlePaste]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  if (!user) {
+    return <div>Not logged in</div>;
+  }
 
   return (
     <div className="max-h-[calc(100vh-48px)] bg-black p-8">
