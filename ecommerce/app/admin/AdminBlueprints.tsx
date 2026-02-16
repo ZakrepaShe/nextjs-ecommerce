@@ -129,6 +129,7 @@ export default function AdminBlueprints({
                           isFavorite={false}
                           isDraggable={true}
                           isHighlighted={false}
+                          extraCount={0}
                         />
                       </SortableItem>
                     );

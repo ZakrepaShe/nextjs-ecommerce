@@ -1,9 +1,14 @@
 "use client";
 
-import { updateUserBlueprintFavorite, updateUserBlueprintFound } from "@/app/actions/arc-blueprints-actions";
+import {
+  updateUserBlueprintFavorite,
+  updateUserBlueprintExtra,
+  updateUserBlueprintFound,
+} from "@/app/actions/arc-blueprints-actions";
 import { recognizeBlueprintsFromImage } from "@/app/actions/blueprint-recognizer-actions";
 import { useUser } from "@/app/components/UserProvider";
 import type { Blueprint, UserBlueprint } from "@/app/types";
+import { ExtraActionType } from "@/app/types";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
 import toast from "react-hot-toast";
@@ -40,62 +45,87 @@ export default function Blueprints({
   const totalCount = blueprints.length;
   const userId = user?.userId;
 
-  const handleFoundBlueprint = (blueprintId: string) => {
+  const handleFoundBlueprint = (blueprintId: string, isFound: boolean) => {
     if (!userId) {
       return;
     }
-    setFoundBlueprintsCount((prev) => prev + 1);
-    updateUserBlueprintFound(userId, blueprintId, true);
+    setFoundBlueprintsCount((prev) => isFound ? prev + 1 : prev - 1);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
         ...prev[blueprintId],
-        isFound: true,
+        isFound,
       },
     }));
+    try {
+      updateUserBlueprintFound(userId, blueprintId, isFound);
+    } catch (error: unknown) {
+      toast.error("Error updating blueprint found state");
+      setFoundBlueprintsCount((prev) => isFound ? prev - 1 : prev + 1);
+      setUserBlueprintsState((prev) => ({
+        ...prev,
+        [blueprintId]: {
+          ...prev[blueprintId],
+          isFound: !isFound,
+        },
+      }));
+    }
   };
 
-  const handleUnfoundBlueprint = (blueprintId: string) => {
+  const handleFavoriteBlueprint = (blueprintId: string, isFavorite: boolean) => {
     if (!userId) {
       return;
     }
-    setFoundBlueprintsCount((prev) => prev - 1);
-    updateUserBlueprintFound(userId, blueprintId, false);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
         ...prev[blueprintId],
-        isFound: false,
+        isFavorite,
       },
     }));
+    try {
+      updateUserBlueprintFavorite(userId, blueprintId, isFavorite);
+    } catch (error: unknown) {
+      toast.error("Error updating blueprint favorite state");
+      setUserBlueprintsState((prev) => ({
+        ...prev,
+        [blueprintId]: {
+          ...prev[blueprintId],
+          isFavorite: !isFavorite,
+        },
+      }));
+    }
   };
 
-  const handleFavoriteBlueprint = (blueprintId: string) => {
+  const handleExtra = async (blueprintId: string, action: ExtraActionType) => {
     if (!userId) {
       return;
     }
-    updateUserBlueprintFavorite(userId, blueprintId, true);
-    setUserBlueprintsState((prev) => ({
-      ...prev,
-      [blueprintId]: {
-        ...prev[blueprintId],
-        isFavorite: !prev[blueprintId]?.isFavorite,
-      },
-    }));
-  };
 
-  const handleUnfavoriteBlueprint = (blueprintId: string) => {
-    if (!userId) {
-      return;
-    }
-    updateUserBlueprintFavorite(userId, blueprintId, false);
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
         ...prev[blueprintId],
-        isFavorite: false,
+        extraCount: action === ExtraActionType.Increment
+          ? prev[blueprintId].extraCount + 1
+          : prev[blueprintId].extraCount - 1,
       },
     }));
+
+    try {
+      await updateUserBlueprintExtra(userId, blueprintId, action);
+    } catch (error: unknown) {
+      toast.error("Error updating blueprint extra state");
+      setUserBlueprintsState((prev) => ({
+        ...prev,
+        [blueprintId]: {
+          ...prev[blueprintId],
+          extraCount: action === ExtraActionType.Increment
+            ? prev[blueprintId].extraCount - 1
+            : prev[blueprintId].extraCount + 1,
+        },
+      }));
+    }
   };
 
   const processImage = async (file: File) => {
@@ -141,6 +171,8 @@ export default function Blueprints({
                 isFound: true,
                 isFavorite:
                   userBlueprintsState[match.blueprint]?.isFavorite || false,
+                extraCount:
+                  userBlueprintsState[match.blueprint]?.extraCount || 0,
               };
             }
           });
@@ -178,33 +210,36 @@ export default function Blueprints({
     }
   };
 
-  const handlePaste = useCallback(async (e: ClipboardEvent) => {
-    if (isProcessing) {
-      return;
-    }
-
-    const items = e.clipboardData?.items;
-    if (!items) {
-      return;
-    }
-
-    // Find image in clipboard
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.indexOf("image") !== -1) {
-        e.preventDefault();
-        const blob = item.getAsFile();
-        if (blob) {
-          // Convert blob to File object
-          const file = new File([blob], "pasted-image.png", {
-            type: blob.type || "image/png",
-          });
-          await processImage(file);
-        }
-        break;
+  const handlePaste = useCallback(
+    async (e: ClipboardEvent) => {
+      if (isProcessing) {
+        return;
       }
-    }
-  }, [isProcessing]);
+
+      const items = e.clipboardData?.items;
+      if (!items) {
+        return;
+      }
+
+      // Find image in clipboard
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf("image") !== -1) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          if (blob) {
+            // Convert blob to File object
+            const file = new File([blob], "pasted-image.png", {
+              type: blob.type || "image/png",
+            });
+            await processImage(file);
+          }
+          break;
+        }
+      }
+    },
+    [isProcessing]
+  );
 
   useEffect(() => {
     // Add paste event listener
@@ -293,7 +328,15 @@ export default function Blueprints({
               const isFavorite =
                 userBlueprintsState[blueprint.id]?.isFavorite || false;
 
-              const isHighlighted = highlightText && blueprint.name?.toLowerCase().includes(highlightText.toLowerCase()) || false;
+              const extraCount =
+                userBlueprintsState[blueprint.id]?.extraCount || 0;
+
+              const isHighlighted =
+                (highlightText &&
+                  blueprint.name
+                    ?.toLowerCase()
+                    .includes(highlightText.toLowerCase())) ||
+                false;
 
               return (
                 <BlueprintComponent
@@ -301,11 +344,11 @@ export default function Blueprints({
                   blueprint={blueprint}
                   isFound={isFound}
                   isFavorite={isFavorite}
+                  extraCount={extraCount}
                   isHighlighted={isHighlighted}
-                  handleUnfoundBlueprint={handleUnfoundBlueprint}
                   handleFoundBlueprint={handleFoundBlueprint}
                   handleFavoriteBlueprint={handleFavoriteBlueprint}
-                  handleUnfavoriteBlueprint={handleUnfavoriteBlueprint}
+                  handleExtra={handleExtra}
                 />
               );
             })}

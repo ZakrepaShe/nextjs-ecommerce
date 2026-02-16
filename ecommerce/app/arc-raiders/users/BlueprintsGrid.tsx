@@ -43,11 +43,12 @@ export default function BlueprintsGrid({
               if (!blueprint) {
                 return null;
               }
-              const isFound =
-                userBlueprints[blueprint.id]?.isFound || false;
+              const isFound = userBlueprints[blueprint.id]?.isFound || false;
 
               const isFavorite =
                 userBlueprints[blueprint.id]?.isFavorite || false;
+
+              const extraCount = userBlueprints[blueprint.id]?.extraCount || 0;
 
               return (
                 <BlueprintComponent
@@ -55,6 +56,7 @@ export default function BlueprintsGrid({
                   blueprint={blueprint}
                   isFound={isFound}
                   isFavorite={isFavorite}
+                  extraCount={extraCount}
                   isDraggable={false}
                 />
               );

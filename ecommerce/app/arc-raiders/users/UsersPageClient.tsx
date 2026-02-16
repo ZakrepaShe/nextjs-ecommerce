@@ -21,10 +21,12 @@ export default function UsersPageClient({
   blueprintsOrder,
   initialUserBlueprints,
 }: UsersPageClientProps) {
-  const [selectedUser, setSelectedUser] = useState<User | null>(users[0] || null);
-  const [userBlueprints, setUserBlueprints] = useState<Record<string, UserBlueprint>>(
-    initialUserBlueprints
+  const [selectedUser, setSelectedUser] = useState<User | null>(
+    users[0] || null
   );
+  const [userBlueprints, setUserBlueprints] = useState<
+    Record<string, UserBlueprint>
+  >(initialUserBlueprints);
   const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(false);
 
   useEffect(() => {
@@ -56,7 +58,11 @@ export default function UsersPageClient({
     <div className="flex h-[calc(100vh-48px)] bg-black overflow-hidden">
       {/* Left Sidebar - Users List */}
       <div className="w-64 flex-shrink-0 bg-black border-r border-gray-800 overflow-hidden">
-        <UsersList users={users} selectedUser={selectedUser} onSelectUser={handleSelectUser} />
+        <UsersList
+          users={users}
+          selectedUser={selectedUser}
+          onSelectUser={handleSelectUser}
+        />
       </div>
 
       {/* Right Side - Blueprints */}

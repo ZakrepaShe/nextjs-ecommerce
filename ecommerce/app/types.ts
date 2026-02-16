@@ -38,6 +38,7 @@ export type UserBlueprint = {
   id: string;
   isFound: boolean;
   isFavorite: boolean;
+  extraCount: number;
 };
 
 export type UserBlueprints = {
@@ -45,3 +46,8 @@ export type UserBlueprints = {
   userId: string;
   blueprints: Record<string, UserBlueprint>;
 };
+
+export enum ExtraActionType {
+  Increment = "increment",
+  Decrement = "decrement",
+}

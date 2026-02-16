@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../api/db";
 import type { Blueprint, UserBlueprint, UserBlueprints } from "../types";
-
+import { ExtraActionType } from "../types";
 interface ApiResponse {
   data: Blueprint[];
   maxValue: number;
@@ -138,6 +138,7 @@ export async function getUsersBlueprints(userId: string) {
           id: blueprint.id,
           isFound: false,
           isFavorite: false,
+          extraCount: 0,
         };
         return acc;
       },
@@ -173,6 +174,7 @@ export async function getUsersBlueprints(userId: string) {
             id: blueprint.id,
             isFound: false,
             isFavorite: false,
+            extraCount: 0,
           };
           return acc;
         },
@@ -226,6 +228,33 @@ export async function updateUserBlueprintFavorite(
       { userId },
       { $set: { [`blueprints.${blueprintId}.isFavorite`]: isFavorite } }
     );
+}
+
+export async function updateUserBlueprintExtra(
+  userId: string,
+  blueprintId: string,
+  action: ExtraActionType
+) {
+  const { db } = await connectToDatabase();
+  const userBlueprints = await db
+    .collection<UserBlueprints>("users_blueprints")
+    .findOne({ userId });
+
+  if (!userBlueprints) {
+    return;
+  }
+
+  await db.collection<UserBlueprints>("users_blueprints").updateOne(
+    { userId },
+    {
+      $set: {
+        [`blueprints.${blueprintId}.extraCount`]:
+          action === ExtraActionType.Increment
+            ? userBlueprints.blueprints[blueprintId].extraCount + 1
+            : userBlueprints.blueprints[blueprintId].extraCount - 1,
+      },
+    }
+  );
 }
 
 export async function getBlueprintsOrder() {
