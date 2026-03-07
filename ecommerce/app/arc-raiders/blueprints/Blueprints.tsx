@@ -4,6 +4,7 @@ import {
   updateUserBlueprintFavorite,
   updateUserBlueprintExtra,
   updateUserBlueprintFound,
+  resetUserBlueprints,
 } from "@/app/actions/arc-blueprints-actions";
 import { recognizeBlueprintsFromImage } from "@/app/actions/blueprint-recognizer-actions";
 import { useUser } from "@/app/components/UserProvider";
@@ -130,6 +131,38 @@ export default function Blueprints({
               : prev[blueprintId].extraCount + 1,
         },
       }));
+    }
+  };
+
+  const handleClearAll = () => {
+    if (!userId) {
+      return;
+    }
+    if (
+      !confirm(
+        "Are you sure you want to clear all found blueprints, extra and favorites?"
+      )
+    ) {
+      return;
+    }
+    setFoundBlueprintsCount(0);
+    const originalState = { ...userBlueprintsState };
+    const resetState: Record<string, UserBlueprint> = {};
+    Object.keys(userBlueprintsState).forEach((key) => {
+      resetState[key] = {
+        ...userBlueprintsState[key],
+        isFound: false,
+        isFavorite: false,
+        extraCount: 0,
+      };
+    });
+    setUserBlueprintsState(resetState);
+
+    try {
+      resetUserBlueprints(userId);
+    } catch (error: unknown) {
+      toast.error("Error resetting blueprints");
+      setUserBlueprintsState(originalState);
     }
   };
 
@@ -297,22 +330,30 @@ export default function Blueprints({
                 className="text-white text-base bg-transparent border-b border-white focus:outline-none"
               />
             </div>
-            <div className="bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="blueprint-upload"
-                className="hidden"
-                accept="image/*"
-                onChange={handleUpload}
-                disabled={isProcessing}
-              />
-              <label
-                htmlFor="blueprint-upload"
-                className={`cursor-pointer block px-4 py-2 ${isProcessing ? "opacity-50" : ""}`}
+            <div className="flex items-center gap-2">
+              <div className="bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="blueprint-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  disabled={isProcessing}
+                />
+                <label
+                  htmlFor="blueprint-upload"
+                  className={`cursor-pointer block px-4 py-2 ${isProcessing ? "opacity-50" : ""}`}
+                >
+                  {isProcessing ? "Processing..." : "Upload Screenshot"}
+                </label>
+              </div>
+              <button
+                onClick={() => handleClearAll()}
+                className="text-white hover:text-gray-400 transition-colors"
               >
-                {isProcessing ? "Processing..." : "Upload Screenshot"}
-              </label>
+                Clear blueprints
+              </button>
             </div>
           </div>
         </div>

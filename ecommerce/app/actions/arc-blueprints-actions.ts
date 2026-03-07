@@ -230,6 +230,33 @@ export async function updateUserBlueprintFavorite(
     );
 }
 
+export async function resetUserBlueprints(userId: string) {
+  const { db } = await connectToDatabase();
+  const blueprints = await db.collection("blueprints").find({}).toArray();
+
+  const resetBlueprints = blueprints.reduce(
+    (acc, blueprint) => {
+      acc[blueprint.id] = {
+        id: blueprint.id,
+        isFound: false,
+        isFavorite: false,
+        extraCount: 0,
+      };
+      return acc;
+    },
+    {} as Record<string, UserBlueprint>
+  );
+
+  await db.collection<UserBlueprints>("users_blueprints").updateOne(
+    { userId },
+    {
+      $set: {
+        blueprints: resetBlueprints,
+      },
+    }
+  );
+}
+
 export async function updateUserBlueprintExtra(
   userId: string,
   blueprintId: string,
