@@ -50,7 +50,10 @@ export default function NavBar() {
             </Link>
           </li>
           <li>
-            <Link href="/arc-raiders/users" className="text-gray-700 hover:text-black">
+            <Link
+              href="/arc-raiders/users"
+              className="text-gray-700 hover:text-black"
+            >
               Friends Blueprints
             </Link>
           </li>

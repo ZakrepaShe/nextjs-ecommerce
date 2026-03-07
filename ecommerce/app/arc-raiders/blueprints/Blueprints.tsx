@@ -49,7 +49,7 @@ export default function Blueprints({
     if (!userId) {
       return;
     }
-    setFoundBlueprintsCount((prev) => isFound ? prev + 1 : prev - 1);
+    setFoundBlueprintsCount((prev) => (isFound ? prev + 1 : prev - 1));
     setUserBlueprintsState((prev) => ({
       ...prev,
       [blueprintId]: {
@@ -61,7 +61,7 @@ export default function Blueprints({
       updateUserBlueprintFound(userId, blueprintId, isFound);
     } catch (error: unknown) {
       toast.error("Error updating blueprint found state");
-      setFoundBlueprintsCount((prev) => isFound ? prev - 1 : prev + 1);
+      setFoundBlueprintsCount((prev) => (isFound ? prev - 1 : prev + 1));
       setUserBlueprintsState((prev) => ({
         ...prev,
         [blueprintId]: {
@@ -72,7 +72,10 @@ export default function Blueprints({
     }
   };
 
-  const handleFavoriteBlueprint = (blueprintId: string, isFavorite: boolean) => {
+  const handleFavoriteBlueprint = (
+    blueprintId: string,
+    isFavorite: boolean
+  ) => {
     if (!userId) {
       return;
     }
@@ -106,9 +109,10 @@ export default function Blueprints({
       ...prev,
       [blueprintId]: {
         ...prev[blueprintId],
-        extraCount: action === ExtraActionType.Increment
-          ? prev[blueprintId].extraCount + 1
-          : prev[blueprintId].extraCount - 1,
+        extraCount:
+          action === ExtraActionType.Increment
+            ? prev[blueprintId].extraCount + 1
+            : prev[blueprintId].extraCount - 1,
       },
     }));
 
@@ -120,9 +124,10 @@ export default function Blueprints({
         ...prev,
         [blueprintId]: {
           ...prev[blueprintId],
-          extraCount: action === ExtraActionType.Increment
-            ? prev[blueprintId].extraCount - 1
-            : prev[blueprintId].extraCount + 1,
+          extraCount:
+            action === ExtraActionType.Increment
+              ? prev[blueprintId].extraCount - 1
+              : prev[blueprintId].extraCount + 1,
         },
       }));
     }

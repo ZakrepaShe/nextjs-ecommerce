@@ -12,9 +12,10 @@ export default async function UsersPage() {
   const blueprintsOrder = await getBlueprintsOrder();
 
   // Get blueprints for the first user by default
-  const firstUserBlueprints = users.length > 0
-    ? await getUsersBlueprints(users[0].userId)
-    : { blueprints: {} };
+  const firstUserBlueprints =
+    users.length > 0
+      ? await getUsersBlueprints(users[0].userId)
+      : { blueprints: {} };
 
   return (
     <UsersPageClient

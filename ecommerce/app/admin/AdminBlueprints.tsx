@@ -80,9 +80,7 @@ export default function AdminBlueprints({
       <div className="max-w-[1040px] mx-auto">
         {/* Header */}
         <h1 className="text-4xl font-bold text-white mb-4">Admin</h1>
-        {!user?.isAdmin ? (
-          null
-        ) : (
+        {!user?.isAdmin ? null : (
           <div className="text-center mb-4">
             <button
               onClick={handleSyncBlueprints}
@@ -102,7 +100,6 @@ export default function AdminBlueprints({
         {/* Grid Container */}
         <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
           {user?.isAdmin ? (
-
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
