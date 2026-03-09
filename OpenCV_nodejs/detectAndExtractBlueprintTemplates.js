@@ -14,7 +14,7 @@ const cv = require("@techstark/opencv-js");
 
 // ================= CONFIG =================
 
-const INPUT_IMAGE = "part2.png";
+const INPUT_IMAGE = "p2.jpg";
 const DEBUG_OUTPUT = "debug_slots.png";
 const SLOTS_DIR = "slots";
 

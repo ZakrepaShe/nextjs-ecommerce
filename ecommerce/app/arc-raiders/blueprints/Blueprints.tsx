@@ -12,7 +12,9 @@ import type { Blueprint, UserBlueprint } from "@/app/types";
 import { ExtraActionType } from "@/app/types";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
+import { useConfirmModal } from "../../components/ConfirmModal";
 import toast from "react-hot-toast";
+import { Tooltip } from "../../components/Tooltip";
 
 type BlueprintsProps = {
   blueprints: Blueprint[];
@@ -41,6 +43,7 @@ export default function Blueprints({
 
   const [highlightText, setHighlightText] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const { modalJsx, openModal } = useConfirmModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalCount = blueprints.length;
@@ -134,17 +137,8 @@ export default function Blueprints({
     }
   };
 
-  const handleClearAll = () => {
-    if (!userId) {
-      return;
-    }
-    if (
-      !confirm(
-        "Are you sure you want to clear all found blueprints, extra and favorites?"
-      )
-    ) {
-      return;
-    }
+  const executeClearAll = () => {
+    if (!userId) return;
     setFoundBlueprintsCount(0);
     const originalState = { ...userBlueprintsState };
     const resetState: Record<string, UserBlueprint> = {};
@@ -164,6 +158,17 @@ export default function Blueprints({
       toast.error("Error resetting blueprints");
       setUserBlueprintsState(originalState);
     }
+  };
+
+  const handleClearAll = () => {
+    if (!userId) return;
+    openModal({
+      title: "Clear all blueprints?",
+      message:
+        "This will reset all found blueprints, extras and favorites. This action cannot be undone.",
+      confirmLabel: "Yes, clear all",
+      onConfirm: executeClearAll,
+    });
   };
 
   const processImage = async (file: File) => {
@@ -331,26 +336,28 @@ export default function Blueprints({
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className="bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  id="blueprint-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleUpload}
-                  disabled={isProcessing}
-                />
-                <label
-                  htmlFor="blueprint-upload"
-                  className={`cursor-pointer block px-4 py-2 ${isProcessing ? "opacity-50" : ""}`}
-                >
-                  {isProcessing ? "Processing..." : "Upload Screenshot"}
-                </label>
-              </div>
+              <Tooltip text="Take a screenshot of your blueprints in a game and upload it. Even Ctrl+V will work.">
+                <div className="bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    id="blueprint-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    disabled={isProcessing}
+                  />
+                  <label
+                    htmlFor="blueprint-upload"
+                    className={`cursor-pointer block px-4 py-2 ${isProcessing ? "opacity-50" : ""}`}
+                  >
+                    {isProcessing ? "Processing..." : "Upload Screenshot"}
+                  </label>
+                </div>
+              </Tooltip>
               <button
                 onClick={() => handleClearAll()}
-                className="text-white hover:text-gray-400 transition-colors"
+                className="text-white hover:text-gray-400 transition-colors cursor-pointer border border-white rounded-md px-4 py-2"
               >
                 Clear blueprints
               </button>
@@ -401,6 +408,8 @@ export default function Blueprints({
           </div>
         </div>
       </div>
+
+      {modalJsx}
     </div>
   );
 }
