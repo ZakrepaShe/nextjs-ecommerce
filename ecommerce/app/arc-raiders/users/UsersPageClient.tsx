@@ -7,6 +7,7 @@ import type { UserBlueprint } from "@/app/types";
 import UsersList from "./UsersList";
 import BlueprintsGrid from "./BlueprintsGrid";
 import type { Blueprint } from "@/app/types";
+import toast from "react-hot-toast";
 
 type UsersPageClientProps = {
   users: User[];
@@ -41,6 +42,7 @@ export default function UsersPageClient({
         const result = await getUsersBlueprints(selectedUser.userId);
         setUserBlueprints(result.blueprints);
       } catch (error) {
+        toast.error("Error loading user blueprints");
         console.error("Error loading user blueprints:", error);
       } finally {
         setIsLoadingBlueprints(false);
@@ -73,6 +75,7 @@ export default function UsersPageClient({
           </div>
         ) : (
           <BlueprintsGrid
+            selectedUser={selectedUser || null}
             blueprints={blueprints}
             userBlueprints={userBlueprints}
             blueprintsOrder={blueprintsOrder}

@@ -3,16 +3,15 @@
 import {
   updateUserBlueprintFavorite,
   updateUserBlueprintExtra,
-  updateUserBlueprintFound,
-  resetUserBlueprints,
 } from "@/app/actions/arc-blueprints-actions";
-import { recognizeBlueprintsFromImage } from "@/app/actions/blueprint-recognizer-actions";
 import { useUser } from "@/app/components/UserProvider";
+import { useClearAll } from "@/app/hooks/useClearAll";
+import { useFoundBlueprint } from "@/app/hooks/useFoundBlueprint";
+import { useUpload } from "@/app/hooks/useUpload";
 import type { Blueprint, UserBlueprint } from "@/app/types";
 import { ExtraActionType } from "@/app/types";
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
-import { useConfirmModal } from "../../components/ConfirmModal";
 import toast from "react-hot-toast";
 import { Tooltip } from "../../components/Tooltip";
 
@@ -42,39 +41,29 @@ export default function Blueprints({
   );
 
   const [highlightText, setHighlightText] = useState<string>("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { modalJsx, openModal } = useConfirmModal();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalCount = blueprints.length;
   const userId = user?.userId;
 
-  const handleFoundBlueprint = (blueprintId: string, isFound: boolean) => {
-    if (!userId) {
-      return;
-    }
-    setFoundBlueprintsCount((prev) => (isFound ? prev + 1 : prev - 1));
-    setUserBlueprintsState((prev) => ({
-      ...prev,
-      [blueprintId]: {
-        ...prev[blueprintId],
-        isFound,
-      },
-    }));
-    try {
-      updateUserBlueprintFound(userId, blueprintId, isFound);
-    } catch (error: unknown) {
-      toast.error("Error updating blueprint found state");
-      setFoundBlueprintsCount((prev) => (isFound ? prev - 1 : prev + 1));
-      setUserBlueprintsState((prev) => ({
-        ...prev,
-        [blueprintId]: {
-          ...prev[blueprintId],
-          isFound: !isFound,
-        },
-      }));
-    }
-  };
+  const { handleClearAll, modalJsx } = useClearAll({
+    userId,
+    userBlueprintsState,
+    setUserBlueprintsState,
+    setFoundBlueprintsCount,
+  });
+
+  const { handleUpload, isProcessing, fileInputRef } = useUpload({
+    user,
+    userBlueprintsState,
+    setUserBlueprintsState,
+    setFoundBlueprintsCount,
+  });
+
+  const { handleFoundBlueprint } = useFoundBlueprint({
+    userId,
+    setUserBlueprintsState,
+    setFoundBlueprintsCount,
+  });
 
   const handleFavoriteBlueprint = (
     blueprintId: string,
@@ -136,163 +125,6 @@ export default function Blueprints({
       }));
     }
   };
-
-  const executeClearAll = () => {
-    if (!userId) return;
-    setFoundBlueprintsCount(0);
-    const originalState = { ...userBlueprintsState };
-    const resetState: Record<string, UserBlueprint> = {};
-    Object.keys(userBlueprintsState).forEach((key) => {
-      resetState[key] = {
-        ...userBlueprintsState[key],
-        isFound: false,
-        isFavorite: false,
-        extraCount: 0,
-      };
-    });
-    setUserBlueprintsState(resetState);
-
-    try {
-      resetUserBlueprints(userId);
-    } catch (error: unknown) {
-      toast.error("Error resetting blueprints");
-      setUserBlueprintsState(originalState);
-    }
-  };
-
-  const handleClearAll = () => {
-    if (!userId) return;
-    openModal({
-      title: "Clear all blueprints?",
-      message:
-        "This will reset all found blueprints, extras and favorites. This action cannot be undone.",
-      confirmLabel: "Yes, clear all",
-      onConfirm: executeClearAll,
-    });
-  };
-
-  const processImage = async (file: File) => {
-    if (!file) {
-      return;
-    }
-
-    if (!user) {
-      toast.error("Please log in to use image recognition");
-      return;
-    }
-
-    setIsProcessing(true);
-    const loadingToast = toast.loading("Processing image...");
-
-    try {
-      // Create FormData and append the file
-      const formData = new FormData();
-      formData.append("image", file);
-
-      // Send to server for processing
-      const result = await recognizeBlueprintsFromImage(user.userId, formData);
-
-      toast.dismiss(loadingToast);
-
-      if (result.success) {
-        toast.success(result.message);
-
-        // Update local state for found blueprints
-        if (result.matches) {
-          const updates: Record<string, UserBlueprint> = {};
-          let newFoundCount = 0;
-
-          result.matches.forEach((match) => {
-            if (match.blueprint) {
-              // Only update if not already found
-              if (!userBlueprintsState[match.blueprint]?.isFound) {
-                newFoundCount++;
-              }
-              updates[match.blueprint] = {
-                ...userBlueprintsState[match.blueprint],
-                id: match.blueprint,
-                isFound: true,
-                isFavorite:
-                  userBlueprintsState[match.blueprint]?.isFavorite || false,
-                extraCount:
-                  userBlueprintsState[match.blueprint]?.extraCount || 0,
-              };
-            }
-          });
-
-          setUserBlueprintsState((prev) => ({
-            ...prev,
-            ...updates,
-          }));
-
-          setFoundBlueprintsCount((prev) => prev + newFoundCount);
-        }
-
-        // Clear the file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error("Error processing image:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Unknown error occurred"
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await processImage(file);
-    }
-  };
-
-  const handlePaste = useCallback(
-    async (e: ClipboardEvent) => {
-      if (isProcessing) {
-        return;
-      }
-
-      const items = e.clipboardData?.items;
-      if (!items) {
-        return;
-      }
-
-      // Find image in clipboard
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.type.indexOf("image") !== -1) {
-          e.preventDefault();
-          const blob = item.getAsFile();
-          if (blob) {
-            // Convert blob to File object
-            const file = new File([blob], "pasted-image.png", {
-              type: blob.type || "image/png",
-            });
-            await processImage(file);
-          }
-          break;
-        }
-      }
-    },
-    [isProcessing]
-  );
-
-  useEffect(() => {
-    // Add paste event listener
-    window.addEventListener("paste", handlePaste);
-
-    return () => {
-      // Cleanup: remove event listener on unmount
-      window.removeEventListener("paste", handlePaste);
-    };
-  }, [handlePaste]);
 
   if (isLoading) {
     return <div>Loading...</div>;

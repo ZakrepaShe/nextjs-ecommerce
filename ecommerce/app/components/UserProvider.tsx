@@ -3,6 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { createContext } from "react";
 import { getCurrentUser } from "../actions/user-actions";
+import toast from "react-hot-toast";
 
 export type User = {
   _id?: string;
@@ -37,6 +38,7 @@ export default function UserProvider({
         setUserState(serverUser);
       } catch (error) {
         console.error("Error syncing user from server:", error);
+        toast.error("Error syncing user from server");
         setUserState(null);
       } finally {
         setIsLoading(false);
