@@ -57,7 +57,7 @@ export default function BlueprintsGrid({
   });
 
   const { handleFoundBlueprint } = useFoundBlueprint({
-    userId: selectedUser?.userId,
+    userId: user?.isAdmin ? selectedUser?.userId : undefined,
     setUserBlueprintsState,
     setFoundBlueprintsCount,
   });

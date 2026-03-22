@@ -9,6 +9,8 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       "/arc-raiders/blueprints": ["./public/templates/**/*"],
+      "/arc-raiders/users": ["./public/templates/**/*"],
+      "/arc-raiders/users/**": ["./public/templates/**/*"],
       "/api/*": ["./public/templates/**/*"],
     },
   },
