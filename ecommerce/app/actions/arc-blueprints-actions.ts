@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Db } from "mongodb";
 import { connectToDatabase } from "../api/db";
 import type { Blueprint, UserBlueprint, UserBlueprints } from "../types";
 import { ExtraActionType } from "../types";
@@ -44,6 +45,49 @@ async function fetchAllBlueprints(): Promise<{
   return { blueprints: allBlueprints, total };
 }
 
+async function syncBlueprintsOrder(
+  db: Db,
+  apiBlueprintsOrdered: Blueprint[]
+): Promise<void> {
+  const apiIdsOrdered = apiBlueprintsOrdered.map((b) => b.id);
+
+  const [orderDoc, extrasDoc] = await Promise.all([
+    db.collection("blueprints_order").findOne({ type: "blueprints_order" }),
+    db.collection("extra_blueprints").findOne({ type: "extra_blueprints" }),
+  ]);
+
+  const extraIds =
+    (extrasDoc?.blueprints as { id: string }[] | undefined)?.map((b) => b.id) ??
+    [];
+  const allowed = new Set([...apiIdsOrdered, ...extraIds]);
+
+  const currentOrder = (orderDoc?.blueprints as string[] | undefined) ?? [];
+
+  const mergedSet = new Set<string>();
+  const merged: string[] = [];
+
+  const pushUnique = (id: string) => {
+    if (!mergedSet.has(id)) {
+      mergedSet.add(id);
+      merged.push(id);
+    }
+  };
+
+  for (const id of currentOrder) {
+    if (allowed.has(id)) pushUnique(id);
+  }
+  for (const id of apiIdsOrdered) pushUnique(id);
+  for (const id of extraIds) pushUnique(id);
+
+  await db
+    .collection("blueprints_order")
+    .updateOne(
+      { type: "blueprints_order" },
+      { $set: { blueprints: merged } },
+      { upsert: true }
+    );
+}
+
 export async function syncBlueprints() {
   try {
     const { db } = await connectToDatabase();
@@ -76,7 +120,7 @@ export async function syncBlueprints() {
       syncedCount++;
     }
 
-    // Update counters with new total
+    // Update counters with new total and last synced date
     await db
       .collection("counters")
       .updateOne(
@@ -84,6 +128,9 @@ export async function syncBlueprints() {
         { $set: { total, lastSynced: new Date() } },
         { upsert: true }
       );
+
+    // Sync blueprints order
+    await syncBlueprintsOrder(db, blueprints);
 
     // Revalidate the pages that display blueprints
     revalidatePath("/admin");
