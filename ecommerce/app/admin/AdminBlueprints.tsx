@@ -13,7 +13,6 @@ import {
   COLLECTION_TILE_SIZE,
   COLLECTION_TABS,
   collectionGridWidth,
-  collectionSectionMinWidth,
 } from "../types";
 import { BlueprintComponent } from "../components/Blueprint";
 import { useState } from "react";
@@ -97,14 +96,8 @@ export default function AdminBlueprints({
   };
 
   return (
-    <div
-      className="min-h-[calc(100vh-48px)] w-full bg-black p-8"
-      style={{ minWidth: collectionSectionMinWidth() }}
-    >
-      <div
-        className="mx-auto min-h-full"
-        style={{ width: collectionGridWidth(COLLECTION_COLUMNS.blueprints) }}
-      >
+    <div className="flex h-[calc(100vh-48px)] w-full min-w-0 flex-col overflow-hidden bg-black">
+      <div className="shrink-0 px-8 pt-8">
         {/* Header */}
         <h1 className="text-4xl font-bold text-white mb-4">Admin</h1>
         <div className="flex items-center gap-2 mb-4">
@@ -139,9 +132,9 @@ export default function AdminBlueprints({
             </button>
           </div>
         )}
+      </div>
 
-        {/* Grid Container */}
-        <div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto px-8 pb-8">
           {user?.isAdmin ? (
             <DndContext
               sensors={sensors}
@@ -188,7 +181,6 @@ export default function AdminBlueprints({
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }

@@ -15,7 +15,6 @@ import {
   COLLECTION_TILE_SIZE,
   COLLECTION_TABS,
   collectionGridWidth,
-  collectionSectionMinWidth,
   ExtraActionType,
 } from "@/app/types";
 import { useState, useMemo } from "react";
@@ -154,20 +153,14 @@ export default function Blueprints({
   }
 
   return (
-    <div
-      className="min-h-[calc(100vh-48px)] w-full bg-black p-8"
-      style={{ minWidth: collectionSectionMinWidth() }}
-    >
-      <div
-        className="mx-auto min-h-full"
-        style={{ width: collectionGridWidth(COLLECTION_COLUMNS.blueprints) }}
-      >
+    <div className="flex h-[calc(100vh-48px)] w-full min-w-0 flex-col overflow-hidden bg-black">
+      <div className="shrink-0 px-8 pt-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-white uppercase mb-2">
             BLUEPRINTS
           </h1>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {COLLECTION_TABS.map((item) => (
                 <button
@@ -238,9 +231,9 @@ export default function Blueprints({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Grid Container */}
-        <div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto px-8 pb-8">
           <div
             className="grid gap-2"
             style={{
@@ -281,7 +274,6 @@ export default function Blueprints({
             })}
           </div>
         </div>
-      </div>
 
       {modalJsx}
     </div>

@@ -40,11 +40,6 @@ export function collectionGridWidth(columns: number): string {
   return `calc(${columns} * ${COLLECTION_TILE_SIZE} + ${gaps} * ${COLLECTION_GAP})`;
 }
 
-/** Collection pages stay at least 1690px wide. */
-export function collectionSectionMinWidth(): string {
-  return "1690px";
-}
-
 export function categoryOf(blueprint: {
   id: string;
   category?: CollectionCategory;
