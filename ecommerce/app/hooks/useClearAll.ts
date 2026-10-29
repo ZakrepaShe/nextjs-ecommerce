@@ -50,7 +50,7 @@ export function useClearAll({
     openModal({
       title: "Clear all blueprints?",
       message:
-        "This will reset all found blueprints, extras and favorites. This action cannot be undone.",
+        "This will reset found blueprints, stencils, and designs, plus extras and favorites. This action cannot be undone.",
       confirmLabel: "Yes, clear all",
       onConfirm: executeClearAll,
     });

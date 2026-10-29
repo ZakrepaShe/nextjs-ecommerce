@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import type { Db } from "mongodb";
 import { connectToDatabase } from "../api/db";
-import type { Blueprint, UserBlueprint, UserBlueprints } from "../types";
+import type {
+  Blueprint,
+  CollectionCategory,
+  UserBlueprint,
+  UserBlueprints,
+} from "../types";
 import { ExtraActionType } from "../types";
 interface ApiResponse {
   data: Blueprint[];
@@ -18,31 +23,56 @@ interface ApiResponse {
   };
 }
 
-async function fetchAllBlueprints(): Promise<{
-  blueprints: Blueprint[];
-  total: number;
-}> {
-  const allBlueprints: Blueprint[] = [];
+const COLLECTIONS: { category: CollectionCategory; itemType: string }[] = [
+  { category: "blueprints", itemType: "Blueprint" },
+  { category: "stencils", itemType: "Stencil" },
+  { category: "designs", itemType: "Design" },
+];
+
+type CollectionTotals = Record<CollectionCategory, number>;
+
+async function fetchCollection(
+  itemType: string
+): Promise<{ items: Blueprint[]; total: number }> {
+  const items: Blueprint[] = [];
   let currentPage = 1;
   let total = 0;
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const url = `https://metaforge.app/api/arc-raiders/items?item_type=Blueprint&page=${currentPage}&limit=50`;
+    const url = `https://metaforge.app/api/arc-raiders/items?item_type=${encodeURIComponent(itemType)}&page=${currentPage}&limit=100`;
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch blueprints: ${response.statusText}`);
+      throw new Error(`Failed to fetch ${itemType}: ${response.statusText}`);
     }
 
     const data: ApiResponse = await response.json();
-    allBlueprints.push(...data.data);
+    items.push(...data.data);
     total = data.pagination.total;
     hasNextPage = data.pagination.hasNextPage;
     currentPage++;
   }
 
-  return { blueprints: allBlueprints, total };
+  return { items, total };
+}
+
+async function fetchAllBlueprints(): Promise<{
+  blueprints: Blueprint[];
+  totals: CollectionTotals;
+}> {
+  const totals = {} as CollectionTotals;
+  const blueprints: Blueprint[] = [];
+
+  for (const collection of COLLECTIONS) {
+    const { items, total } = await fetchCollection(collection.itemType);
+    totals[collection.category] = total;
+    blueprints.push(
+      ...items.map((item) => ({ ...item, category: collection.category }))
+    );
+  }
+
+  return { blueprints, totals };
 }
 
 async function syncBlueprintsOrder(
@@ -96,17 +126,21 @@ export async function syncBlueprints() {
     const counter = await db
       .collection("counters")
       .findOne({ type: "blueprints" });
-    const currentTotal = counter?.total || 0;
 
-    // Fetch all blueprints from API
-    const { blueprints, total } = await fetchAllBlueprints();
+    const { blueprints, totals } = await fetchAllBlueprints();
+    const previous = counter?.totals as CollectionTotals | undefined;
+    const unchanged =
+      previous &&
+      COLLECTIONS.every(
+        (collection) =>
+          previous[collection.category] === totals[collection.category]
+      );
 
-    // Check if total has changed
-    if (total === currentTotal) {
+    if (unchanged) {
       return {
         success: true,
-        message: "No changes detected. Blueprints are up to date.",
-        total,
+        message: "No changes detected. Collections are up to date.",
+        total: blueprints.length,
         synced: 0,
       };
     }
@@ -121,13 +155,17 @@ export async function syncBlueprints() {
     }
 
     // Update counters with new total and last synced date
-    await db
-      .collection("counters")
-      .updateOne(
-        { type: "blueprints" },
-        { $set: { total, lastSynced: new Date() } },
-        { upsert: true }
-      );
+    await db.collection("counters").updateOne(
+      { type: "blueprints" },
+      {
+        $set: {
+          totals,
+          total: blueprints.length,
+          lastSynced: new Date(),
+        },
+      },
+      { upsert: true }
+    );
 
     // Sync blueprints order
     await syncBlueprintsOrder(db, blueprints);
@@ -139,8 +177,8 @@ export async function syncBlueprints() {
 
     return {
       success: true,
-      message: `Successfully synced ${syncedCount} blueprints.`,
-      total,
+      message: `Successfully synced ${syncedCount} items (${totals.blueprints} blueprints, ${totals.stencils} stencils, ${totals.designs} designs).`,
+      total: blueprints.length,
       synced: syncedCount,
     };
   } catch (error) {
@@ -165,34 +203,31 @@ export async function getBlueprints(): Promise<Blueprint[]> {
   });
 }
 
+function blankUserBlueprint(id: string): UserBlueprint {
+  return { id, isFound: false, isFavorite: false, extraCount: 0 };
+}
+
 export async function getUsersBlueprints(userId: string) {
   const { db } = await connectToDatabase();
-  const counter = await db
-    .collection("counters")
-    .findOne({ type: "blueprints" });
+  const catalog = await db
+    .collection("blueprints")
+    .find({}, { projection: { id: 1 } })
+    .toArray();
+  const catalogIds = catalog.map((blueprint) => blueprint.id as string);
 
   const userBlueprints = await db
     .collection<UserBlueprints>("users_blueprints")
     .findOne({ userId });
 
-  // If user blueprints don't exist, create them atomically with upsert
   if (!userBlueprints) {
-    const blueprints = await db.collection("blueprints").find({}).toArray();
-
-    const initialBlueprints = blueprints.reduce(
-      (acc, blueprint) => {
-        acc[blueprint.id] = {
-          id: blueprint.id,
-          isFound: false,
-          isFavorite: false,
-          extraCount: 0,
-        };
+    const initialBlueprints = catalogIds.reduce(
+      (acc, id) => {
+        acc[id] = blankUserBlueprint(id);
         return acc;
       },
       {} as Record<string, UserBlueprint>
     );
 
-    // Use findOneAndUpdate with upsert + $setOnInsert to avoid race condition duplicates
     await db.collection<UserBlueprints>("users_blueprints").findOneAndUpdate(
       { userId },
       {
@@ -204,47 +239,28 @@ export async function getUsersBlueprints(userId: string) {
       { upsert: true, returnDocument: "after" }
     );
 
-    return {
-      blueprints: initialBlueprints,
-    };
+    return { blueprints: initialBlueprints };
   }
 
-  // If Blueprints count from metaforge has changed, update user blueprints
-  if (counter?.total !== Object.keys(userBlueprints.blueprints).length) {
-    const blueprints = await db.collection("blueprints").find({}).toArray();
-
-    const newBlueprints = blueprints
-      .filter((blueprint) => !userBlueprints.blueprints[blueprint.id])
-      .reduce(
-        (acc, blueprint) => {
-          acc[blueprint.id] = {
-            id: blueprint.id,
-            isFound: false,
-            isFavorite: false,
-            extraCount: 0,
-          };
-          return acc;
-        },
-        {} as Record<string, UserBlueprint>
-      );
-
-    await db.collection<UserBlueprints>("users_blueprints").updateOne(
-      { userId },
-      {
-        $set: {
-          blueprints: { ...userBlueprints.blueprints, ...newBlueprints },
-        },
-      }
-    );
-
-    return {
-      blueprints: { ...userBlueprints.blueprints, ...newBlueprints },
-    };
+  const missing = catalogIds.filter((id) => !userBlueprints.blueprints[id]);
+  if (missing.length === 0) {
+    return { blueprints: userBlueprints.blueprints };
   }
 
-  return {
-    blueprints: userBlueprints.blueprints,
-  };
+  const added = missing.reduce(
+    (acc, id) => {
+      acc[id] = blankUserBlueprint(id);
+      return acc;
+    },
+    {} as Record<string, UserBlueprint>
+  );
+  const merged = { ...userBlueprints.blueprints, ...added };
+
+  await db
+    .collection<UserBlueprints>("users_blueprints")
+    .updateOne({ userId }, { $set: { blueprints: merged } });
+
+  return { blueprints: merged };
 }
 
 export async function updateUserBlueprintFound(

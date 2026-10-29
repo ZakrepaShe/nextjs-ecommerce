@@ -1,6 +1,7 @@
 "use client";
 
-import type { Blueprint, UserBlueprint } from "@/app/types";
+import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
+import { categoryOf, COLLECTION_TABS } from "@/app/types";
 import type { User } from "@/app/components/UserProvider";
 import { BlueprintComponent } from "@/app/components/Blueprint";
 import { useUser } from "@/app/components/UserProvider";
@@ -29,13 +30,26 @@ export default function BlueprintsGrid({
     return Object.values(userBlueprints).filter((bp) => bp.isFound).length;
   }, [userBlueprints]);
 
-  const [foundBlueprintsCount, setFoundBlueprintsCount] = useState<number>(
+  const [, setFoundBlueprintsCount] = useState<number>(
     initialFoundBlueprintsCount
   );
-  const totalCount = blueprints.length;
+  const [tab, setTab] = useState<CollectionCategory>("blueprints");
 
   const [userBlueprintsState, setUserBlueprintsState] =
     useState<Record<string, UserBlueprint>>(userBlueprints);
+
+  const tabBlueprints = useMemo(() => {
+    return blueprintsOrder
+      .map((id) => blueprints.find((blueprint) => blueprint.id === id))
+      .filter(
+        (blueprint): blueprint is Blueprint =>
+          !!blueprint && categoryOf(blueprint) === tab
+      );
+  }, [blueprints, blueprintsOrder, tab]);
+
+  const foundInTab = tabBlueprints.filter(
+    (blueprint) => userBlueprintsState[blueprint.id]?.isFound
+  ).length;
 
   useEffect(() => {
     setUserBlueprintsState(userBlueprints);
@@ -71,8 +85,24 @@ export default function BlueprintsGrid({
             BLUEPRINTS
           </h1>
           <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {COLLECTION_TABS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={`px-3 py-1 rounded-full text-sm uppercase ${
+                    tab === item.id
+                      ? "bg-white text-black"
+                      : "text-white border border-white/40"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
             <p className="text-white uppercase text-sm">
-              FOUND: {foundBlueprintsCount}/{totalCount}
+              FOUND: {foundInTab}/{tabBlueprints.length}
             </p>
             {user?.isAdmin ? (
               <div className="flex items-center gap-2">
@@ -109,13 +139,7 @@ export default function BlueprintsGrid({
         {/* Grid Container */}
         <div className="overflow-y-auto flex-1 min-h-0 pr-2">
           <div className="grid grid-cols-10 gap-2">
-            {blueprintsOrder.map((blueprintId) => {
-              const blueprint = blueprints.find(
-                (blueprint) => blueprint.id === blueprintId
-              );
-              if (!blueprint) {
-                return null;
-              }
+            {tabBlueprints.map((blueprint) => {
               const isFound =
                 userBlueprintsState[blueprint.id]?.isFound || false;
 

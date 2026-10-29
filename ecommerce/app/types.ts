@@ -10,6 +10,24 @@ export type User = {
 
 export type FrontendUser = Omit<User, "password" | "_id">;
 
+export type CollectionCategory = "blueprints" | "stencils" | "designs";
+
+export const COLLECTION_TABS: { id: CollectionCategory; label: string }[] = [
+  { id: "blueprints", label: "Blueprints" },
+  { id: "stencils", label: "Stencils" },
+  { id: "designs", label: "Designs" },
+];
+
+export function categoryOf(blueprint: {
+  id: string;
+  category?: CollectionCategory;
+}): CollectionCategory {
+  if (blueprint.id.startsWith("extra_") || !blueprint.category) {
+    return "blueprints";
+  }
+  return blueprint.category;
+}
+
 export type Blueprint = {
   id: string;
   name: string;
@@ -32,6 +50,7 @@ export type Blueprint = {
   locations: unknown[];
   guide_links: unknown[];
   game_asset_id: number | null;
+  category?: CollectionCategory;
 };
 
 export type UserBlueprint = {

@@ -6,9 +6,10 @@ import {
   updateBlueprintsOrder,
 } from "../actions/arc-blueprints-actions";
 import { useUser } from "../components/UserProvider";
-import type { Blueprint } from "../types";
+import type { Blueprint, CollectionCategory } from "../types";
+import { categoryOf, COLLECTION_TABS } from "../types";
 import { BlueprintComponent } from "../components/Blueprint";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -50,6 +51,12 @@ export default function AdminBlueprints({
 
   const [blueprintsOrderState, setBlueprintsOrderState] =
     useState<string[]>(blueprintsOrder);
+  const [tab, setTab] = useState<CollectionCategory>("blueprints");
+
+  const tabIds = blueprintsOrderState.filter((id) => {
+    const blueprint = blueprints.find((item) => item.id === id);
+    return blueprint && categoryOf(blueprint) === tab;
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -66,10 +73,17 @@ export default function AdminBlueprints({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = blueprintsOrderState.indexOf(active.id as string);
-      const newIndex = blueprintsOrderState.indexOf(over.id as string);
+      const oldIndex = tabIds.indexOf(active.id as string);
+      const newIndex = tabIds.indexOf(over.id as string);
+      if (oldIndex < 0 || newIndex < 0) return;
 
-      const nextState = arrayMove(blueprintsOrderState, oldIndex, newIndex);
+      const nextTab = arrayMove(tabIds, oldIndex, newIndex);
+      let cursor = 0;
+      const nextState = blueprintsOrderState.map((id) => {
+        const blueprint = blueprints.find((item) => item.id === id);
+        if (!blueprint || categoryOf(blueprint) !== tab) return id;
+        return nextTab[cursor++];
+      });
       setBlueprintsOrderState(nextState);
       updateBlueprintsOrder(nextState);
     }
@@ -80,6 +94,22 @@ export default function AdminBlueprints({
       <div className="max-w-[1040px] mx-auto">
         {/* Header */}
         <h1 className="text-4xl font-bold text-white mb-4">Admin</h1>
+        <div className="flex items-center gap-2 mb-4">
+          {COLLECTION_TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              className={`px-3 py-1 rounded-full text-sm uppercase ${
+                tab === item.id
+                  ? "bg-white text-black"
+                  : "text-white border border-white/40"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
         {!user?.isAdmin ? null : (
           <div className="text-center mb-4">
             <button
@@ -105,12 +135,9 @@ export default function AdminBlueprints({
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext
-                items={blueprintsOrderState}
-                strategy={rectSortingStrategy}
-              >
+              <SortableContext items={tabIds} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-10 gap-2">
-                  {blueprintsOrderState.map((blueprintId) => {
+                  {tabIds.map((blueprintId) => {
                     const blueprint = blueprints.find(
                       (bp) => bp.id === blueprintId
                     );

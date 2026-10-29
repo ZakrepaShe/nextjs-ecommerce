@@ -8,8 +8,8 @@ import { useUser } from "@/app/components/UserProvider";
 import { useClearAll } from "@/app/hooks/useClearAll";
 import { useFoundBlueprint } from "@/app/hooks/useFoundBlueprint";
 import { useUpload } from "@/app/hooks/useUpload";
-import type { Blueprint, UserBlueprint } from "@/app/types";
-import { ExtraActionType } from "@/app/types";
+import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
+import { categoryOf, COLLECTION_TABS, ExtraActionType } from "@/app/types";
 import { useState, useMemo } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
 import toast from "react-hot-toast";
@@ -36,13 +36,25 @@ export default function Blueprints({
     return Object.values(userBlueprints).filter((bp) => bp.isFound).length;
   }, [userBlueprints]);
 
-  const [foundBlueprintsCount, setFoundBlueprintsCount] = useState<number>(
+  const [, setFoundBlueprintsCount] = useState<number>(
     initialFoundBlueprintsCount
   );
 
   const [highlightText, setHighlightText] = useState<string>("");
+  const [tab, setTab] = useState<CollectionCategory>("blueprints");
 
-  const totalCount = blueprints.length;
+  const tabBlueprints = useMemo(() => {
+    return blueprintsOrder
+      .map((id) => blueprints.find((blueprint) => blueprint.id === id))
+      .filter(
+        (blueprint): blueprint is Blueprint =>
+          !!blueprint && categoryOf(blueprint) === tab
+      );
+  }, [blueprints, blueprintsOrder, tab]);
+
+  const foundInTab = tabBlueprints.filter(
+    (blueprint) => userBlueprintsState[blueprint.id]?.isFound
+  ).length;
   const userId = user?.userId;
 
   const { handleClearAll, modalJsx } = useClearAll({
@@ -142,8 +154,24 @@ export default function Blueprints({
             BLUEPRINTS
           </h1>
           <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {COLLECTION_TABS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={`px-3 py-1 rounded-full text-sm uppercase ${
+                    tab === item.id
+                      ? "bg-white text-black"
+                      : "text-white border border-white/40"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
             <p className="text-white uppercase text-sm">
-              FOUND: {foundBlueprintsCount}/{totalCount}
+              FOUND: {foundInTab}/{tabBlueprints.length}
             </p>
             <div className="flex items-center gap-2">
               <svg
@@ -200,13 +228,7 @@ export default function Blueprints({
         {/* Grid Container */}
         <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
           <div className="grid grid-cols-10 gap-2">
-            {blueprintsOrder.map((blueprintId) => {
-              const blueprint = blueprints.find(
-                (blueprint) => blueprint.id === blueprintId
-              );
-              if (!blueprint) {
-                return null;
-              }
+            {tabBlueprints.map((blueprint) => {
               const isFound =
                 userBlueprintsState[blueprint.id]?.isFound || false;
 

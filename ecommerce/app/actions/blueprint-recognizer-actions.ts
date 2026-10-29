@@ -5,6 +5,7 @@ import { updateUserBlueprintFound } from "./arc-blueprints-actions";
 import fs from "fs";
 import path from "path";
 import { createCanvas, loadImage } from "canvas";
+import { detectSlots, isBlueprintTile } from "./slots";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const cv = require("@techstark/opencv-js");
@@ -69,12 +70,6 @@ export interface RecognitionResult {
   slotsDetected?: number;
 }
 
-// Configuration constants
-const MIN_AREA = 2500;
-const MAX_AREA = 25000;
-const MIN_ASPECT = 0.8;
-const MAX_ASPECT = 1.2;
-const POSITION_EPS = 6;
 const SLOT_SIZE = 128;
 const MATCH_THRESHOLD = 0.8;
 
@@ -145,10 +140,21 @@ async function loadTemplates() {
     throw new Error(`Templates directory not found (cwd: ${process.cwd()})`);
   }
 
-  const files = fs.readdirSync(templatesDir).filter((f) => f.endsWith(".png"));
+  const dirs = [
+    templatesDir,
+    path.join(templatesDir, "designs"),
+    path.join(templatesDir, "stencils"),
+  ];
+  const files = dirs.flatMap((dir) => {
+    if (!fs.existsSync(dir)) return [];
+    return fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith(".png"))
+      .map((file) => path.join(dir, file));
+  });
 
   for (const file of files) {
-    const img = await loadImage(path.join(templatesDir, file));
+    const img = await loadImage(file);
     const canvas = createCanvas(img.width, img.height);
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
@@ -169,78 +175,6 @@ async function loadTemplates() {
   }
 
   return templates;
-}
-
-// Deduplicate and sort rectangles
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dedupeAndSort(rects: any[]) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const out: any[] = [];
-
-  rects.forEach((r) => {
-    const exists = out.some(
-      (e) =>
-        Math.abs(e.x - r.x) < POSITION_EPS && Math.abs(e.y - r.y) < POSITION_EPS
-    );
-    if (!exists) out.push(r);
-  });
-
-  return out.sort((a, b) => {
-    const dy = a.y - b.y;
-    return Math.abs(dy) > 10 ? dy : a.x - b.x;
-  });
-}
-
-// Detect slots in image
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function detectSlots(src: any) {
-  const gray = new cv.Mat();
-  const blurred = new cv.Mat();
-  const edges = new cv.Mat();
-
-  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-  cv.Canny(blurred, edges, 50, 150);
-
-  const contours = new cv.MatVector();
-  const hierarchy = new cv.Mat();
-
-  cv.findContours(
-    edges,
-    contours,
-    hierarchy,
-    cv.RETR_EXTERNAL,
-    cv.CHAIN_APPROX_SIMPLE
-  );
-
-  const rects = [];
-
-  for (let i = 0; i < contours.size(); i++) {
-    const cnt = contours.get(i);
-    const r = cv.boundingRect(cnt);
-
-    const area = r.width * r.height;
-    const aspect = r.width / r.height;
-
-    if (
-      area >= MIN_AREA &&
-      area <= MAX_AREA &&
-      aspect >= MIN_ASPECT &&
-      aspect <= MAX_ASPECT
-    ) {
-      rects.push(r);
-    }
-
-    cnt.delete();
-  }
-
-  gray.delete();
-  blurred.delete();
-  edges.delete();
-  contours.delete();
-  hierarchy.delete();
-
-  return dedupeAndSort(rects);
 }
 
 // Match slot against templates using template matching only
@@ -319,8 +253,14 @@ function matchAllSlots(
     );
 
     const match = matchSlot(resized, templates);
+    const accepted =
+      match.confidence >= MATCH_THRESHOLD &&
+      (match.name?.endsWith("-design") ||
+        match.name?.endsWith("-stencil") ||
+        match.confidence >= 0.9 ||
+        isBlueprintTile(resized));
 
-    if (match.confidence >= MATCH_THRESHOLD) {
+    if (accepted) {
       results.push({
         slot: i,
         blueprint: match.name,
