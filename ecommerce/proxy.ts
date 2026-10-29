@@ -12,11 +12,11 @@ const protectedRoutes = [
 // Routes that should redirect to home if already authenticated
 const authRoutes = ["/login", "/register"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware entirely for non-GET requests (Server Actions, API calls, etc.)
-  // Middleware should only handle page navigation redirects
+  // Skip proxy entirely for non-GET requests (Server Actions, API calls, etc.)
+  // Proxy should only handle page navigation redirects
   if (request.method !== "GET") {
     return NextResponse.next();
   }
