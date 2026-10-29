@@ -12,7 +12,10 @@ import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
 import {
   categoryOf,
   COLLECTION_COLUMNS,
+  COLLECTION_TILE_SIZE,
   COLLECTION_TABS,
+  collectionGridWidth,
+  collectionSectionMinWidth,
   ExtraActionType,
 } from "@/app/types";
 import { useState, useMemo } from "react";
@@ -151,8 +154,14 @@ export default function Blueprints({
   }
 
   return (
-    <div className="max-h-[calc(100vh-48px)] bg-black p-8">
-      <div className="max-w-[1040px] mx-auto">
+    <div
+      className="min-h-[calc(100vh-48px)] w-full bg-black p-8"
+      style={{ minWidth: collectionSectionMinWidth() }}
+    >
+      <div
+        className="mx-auto min-h-full"
+        style={{ width: collectionGridWidth(COLLECTION_COLUMNS.blueprints) }}
+      >
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-white uppercase mb-2">
@@ -231,11 +240,12 @@ export default function Blueprints({
         </div>
 
         {/* Grid Container */}
-        <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
+        <div>
           <div
             className="grid gap-2"
             style={{
-              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, ${COLLECTION_TILE_SIZE})`,
+              width: collectionGridWidth(COLLECTION_COLUMNS[tab]),
             }}
           >
             {tabBlueprints.map((blueprint) => {

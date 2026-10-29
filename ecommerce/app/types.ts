@@ -26,6 +26,25 @@ export const COLLECTION_COLUMNS: Record<CollectionCategory, number> = {
   designs: 17,
 };
 
+/** Gap on the collection grids (Tailwind `gap-2`). */
+const COLLECTION_GAP = "0.5rem";
+
+/**
+ * Tile edge sized so 17 columns, the gap, and the page padding (`p-8`)
+ * fit in a 1690px-wide window.
+ */
+export const COLLECTION_TILE_SIZE = `calc((1690px - 4rem - 16 * ${COLLECTION_GAP}) / 17)`;
+
+export function collectionGridWidth(columns: number): string {
+  const gaps = Math.max(columns - 1, 0);
+  return `calc(${columns} * ${COLLECTION_TILE_SIZE} + ${gaps} * ${COLLECTION_GAP})`;
+}
+
+/** Collection pages stay at least 1690px wide. */
+export function collectionSectionMinWidth(): string {
+  return "1690px";
+}
+
 export function categoryOf(blueprint: {
   id: string;
   category?: CollectionCategory;

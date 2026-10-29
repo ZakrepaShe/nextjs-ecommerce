@@ -1,7 +1,13 @@
 "use client";
 
 import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
-import { categoryOf, COLLECTION_COLUMNS, COLLECTION_TABS } from "@/app/types";
+import {
+  categoryOf,
+  COLLECTION_COLUMNS,
+  COLLECTION_TILE_SIZE,
+  COLLECTION_TABS,
+  collectionGridWidth,
+} from "@/app/types";
 import type { User } from "@/app/components/UserProvider";
 import { BlueprintComponent } from "@/app/components/Blueprint";
 import { useUser } from "@/app/components/UserProvider";
@@ -78,7 +84,7 @@ export default function BlueprintsGrid({
 
   return (
     <div className="h-full bg-black p-8 overflow-hidden flex flex-col">
-      <div className="max-w-[1040px] mx-auto w-full flex-1 flex flex-col min-h-0">
+      <div className="mx-auto w-full flex-1 flex flex-col min-h-0">
         {/* Header */}
         <div className="mb-6 flex-shrink-0">
           <h1 className="text-4xl font-bold text-white uppercase mb-2">
@@ -137,11 +143,12 @@ export default function BlueprintsGrid({
         </div>
 
         {/* Grid Container */}
-        <div className="overflow-y-auto flex-1 min-h-0 pr-2">
+        <div className="overflow-auto flex-1 min-h-0">
           <div
             className="grid gap-2"
             style={{
-              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, minmax(0, 1fr))`,
+              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, ${COLLECTION_TILE_SIZE})`,
+              width: collectionGridWidth(COLLECTION_COLUMNS[tab]),
             }}
           >
             {tabBlueprints.map((blueprint) => {
