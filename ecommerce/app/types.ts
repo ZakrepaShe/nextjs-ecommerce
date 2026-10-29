@@ -18,6 +18,14 @@ export const COLLECTION_TABS: { id: CollectionCategory; label: string }[] = [
   { id: "designs", label: "Designs" },
 ];
 
+// Column counts from the in-game collection screens: 17 blueprint tiles,
+// 9 stencil cards, 17 design tiles.
+export const COLLECTION_COLUMNS: Record<CollectionCategory, number> = {
+  blueprints: 17,
+  stencils: 9,
+  designs: 17,
+};
+
 export function categoryOf(blueprint: {
   id: string;
   category?: CollectionCategory;

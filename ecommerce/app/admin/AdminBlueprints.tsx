@@ -7,7 +7,7 @@ import {
 } from "../actions/arc-blueprints-actions";
 import { useUser } from "../components/UserProvider";
 import type { Blueprint, CollectionCategory } from "../types";
-import { categoryOf, COLLECTION_TABS } from "../types";
+import { categoryOf, COLLECTION_COLUMNS, COLLECTION_TABS } from "../types";
 import { BlueprintComponent } from "../components/Blueprint";
 import { useState } from "react";
 import {
@@ -136,7 +136,12 @@ export default function AdminBlueprints({
               onDragEnd={handleDragEnd}
             >
               <SortableContext items={tabIds} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-10 gap-2">
+                <div
+                  className="grid gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, minmax(0, 1fr))`,
+                  }}
+                >
                   {tabIds.map((blueprintId) => {
                     const blueprint = blueprints.find(
                       (bp) => bp.id === blueprintId

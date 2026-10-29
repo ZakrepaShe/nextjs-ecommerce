@@ -9,7 +9,12 @@ import { useClearAll } from "@/app/hooks/useClearAll";
 import { useFoundBlueprint } from "@/app/hooks/useFoundBlueprint";
 import { useUpload } from "@/app/hooks/useUpload";
 import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
-import { categoryOf, COLLECTION_TABS, ExtraActionType } from "@/app/types";
+import {
+  categoryOf,
+  COLLECTION_COLUMNS,
+  COLLECTION_TABS,
+  ExtraActionType,
+} from "@/app/types";
 import { useState, useMemo } from "react";
 import { BlueprintComponent } from "../../components/Blueprint";
 import toast from "react-hot-toast";
@@ -227,7 +232,12 @@ export default function Blueprints({
 
         {/* Grid Container */}
         <div className="overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
-          <div className="grid grid-cols-10 gap-2">
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, minmax(0, 1fr))`,
+            }}
+          >
             {tabBlueprints.map((blueprint) => {
               const isFound =
                 userBlueprintsState[blueprint.id]?.isFound || false;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Blueprint, CollectionCategory, UserBlueprint } from "@/app/types";
-import { categoryOf, COLLECTION_TABS } from "@/app/types";
+import { categoryOf, COLLECTION_COLUMNS, COLLECTION_TABS } from "@/app/types";
 import type { User } from "@/app/components/UserProvider";
 import { BlueprintComponent } from "@/app/components/Blueprint";
 import { useUser } from "@/app/components/UserProvider";
@@ -138,7 +138,12 @@ export default function BlueprintsGrid({
 
         {/* Grid Container */}
         <div className="overflow-y-auto flex-1 min-h-0 pr-2">
-          <div className="grid grid-cols-10 gap-2">
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${COLLECTION_COLUMNS[tab]}, minmax(0, 1fr))`,
+            }}
+          >
             {tabBlueprints.map((blueprint) => {
               const isFound =
                 userBlueprintsState[blueprint.id]?.isFound || false;
